@@ -1,0 +1,12 @@
+{
+  "Id": "ponder",
+  "DisplayName": "Ponder",
+  "Author": "xbodwf",
+  "Version": "0.6.0",
+  "ManagerVersion": "0.27.0",
+  "Requirements": [],
+  "AssemblyName": "Ponder.Loader.UMM.dll",
+  "EntryMethod": "Ponder.Loaders.UmmEntry.Load",
+  "HomePage": "",
+  "Repository": ""
+}

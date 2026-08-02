@@ -1,0 +1,51 @@
+{
+  "id": "move-track",
+  "title": "移动轨道",
+  "description": "在规定的时长内修改轨道的属性",
+  "zoom": 3.5,
+  "target": {
+    "type": "event",
+    "event": "MoveTrack"
+  },
+  "tiles": [
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 45, "style": 1 },
+    { "angle": 45, "style": 0 },
+    { "angle": 90, "style": 2 }
+  ],
+  "decos": [
+    { "image": "arrow.png", "tag": "move", "tile": 1, "offsetX": 0, "offsetY": 0.3, "scale": 0.8, "rotation": -45, "depth": 1 },
+    { "image": "arrow.png", "tag": "move", "tile": 3, "offsetX": 0.1, "offsetY": 0, "scale": 0.8, "rotation": 0, "depth": 1 },
+    { "image": "arrow.png", "tag": "move", "tile": 5, "offsetX": 0, "offsetY": -0.3, "scale": 0.8, "rotation": 45, "depth": 1 }
+  ],
+  "chapters": [
+    {
+      "floor": 0,
+      "text": "一段平直的轨道",
+      "logic": [
+        { "cmd": "SetTrackColor", "color": "#FFD24A", "duration": 0.6, "ease": "easeInOut" },
+        { "cmd": "MoveTrack", "offsetX": 0.4, "duration": 0.8, "ease": "easeOut" }
+      ]
+    },
+    {
+      "floor": 3,
+      "text": "轨道向右上方弯折",
+      "logic": [
+        { "cmd": "SetFloorColor", "tile": 3, "endTile": 5, "color": "#4FC3F7", "duration": 0.7, "ease": "easeInOut" },
+        { "cmd": "PositionTrack", "tile": 3, "endTile": 5, "offsetY": 0.5, "duration": 0.8, "ease": "easeOut" },
+        { "cmd": "MoveDecorations", "tag": "move", "offsetY": 0.25, "duration": 0.8, "ease": "easeOut" }
+      ]
+    },
+    {
+      "floor": 5,
+      "text": "终点",
+      "logic": [
+        { "cmd": "AddDecoration", "image": "arrow.png", "tile": 5, "offsetY": -0.3, "scale": 0.9, "rotation": 45, "duration": 0.6 },
+        { "cmd": "MoveTrack", "offsetX": 0.8, "offsetY": 0.8, "duration": 1.0, "ease": "easeInOut" },
+        { "cmd": "SetTrackColor", "color": "#FF5252", "duration": 0.8, "ease": "easeInOut" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Ponder.Loaders</RootNamespace>
+    <AssemblyName>Ponder.Loader.UMM</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Description>My ADOFAI Mod</Description>
+    <Company>xbodwf</Company>
+    <Version>0.6.0</Version>
+    <Copyright>Copyright © 2026 xbodwf</Copyright>
+    <OutputPath>..\..\bin\$(Configuration)\loaders\umm\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GameExePath></GameExePath>
+    <GameVersion>v3.3.1</GameVersion>
+  </PropertyGroup>
+
+  <Import Project="..\..\ADOFAIMod.targets" Condition="Exists('..\..\ADOFAIMod.targets')" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\core\Ponder.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="UnityModManager">
+      <HintPath>..\..\lib\ModManager\UnityModManager.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\lib\v2.9.8\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\lib\ModManager\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\lib\v2.9.8\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\lib\v2.9.8\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\lib\$(GameVersion)\Assembly-CSharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

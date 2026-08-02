@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Ponder</RootNamespace>
+    <AssemblyName>Ponder.Core</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Description>My ADOFAI Mod</Description>
+    <Company>xbodwf</Company>
+    <Version>0.6.0</Version>
+    <Copyright>Copyright © 2026 xbodwf</Copyright>
+    <OutputPath>..\bin\$(Configuration)\core\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <IsCoreProject>true</IsCoreProject>
+    <GameExePath></GameExePath>
+    <GameVersion>v3.3.1</GameVersion>
+  </PropertyGroup>
+
+  <Import Project="..\ADOFAIMod.targets" Condition="Exists('..\ADOFAIMod.targets')" />
+
+  <ItemGroup>
+    <PackageReference Include="HarmonyX" Version="2.10.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="UnityEngine">
+      <HintPath>..\lib\v2.9.8\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\lib\v2.9.8\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\lib\v2.9.8\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\lib\v2.9.8\UnityEngine.TextRenderingModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\lib\v2.9.8\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>..\lib\v2.9.8\UnityEngine.UIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>..\lib\$(GameVersion)\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>..\lib\v2.9.8\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>..\lib\v2.9.8\UnityEngine.ImageConversionModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.Physics2DModule">
+      <HintPath>..\lib\v2.9.8\UnityEngine.Physics2DModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\lib\$(GameVersion)\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\lib\$(GameVersion)\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="RDTools">
+      <HintPath>..\lib\v2.9.8\RDTools.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
