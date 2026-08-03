@@ -1,9 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using GDMiniJSON;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ADOFAI;
 
 namespace Ponder
 {
@@ -13,7 +16,9 @@ namespace Ponder
         private const string Gray = "#8A8A8A";
         private static readonly Color DimColor = new Color(0f, 0f, 0f, 0.55f);
         private static readonly Color ButtonColor = new Color(0.08f, 0.11f, 0.16f, 0.95f);
-        private static readonly Color CloseColor = new Color(0.85f, 0.2f, 0.2f, 0.95f);
+        private static readonly Color CloseColor = new Color(0.85f, 0.2f, 0.2f, 0.65f);
+        // 关闭按钮 hover 高亮 alpha (Color != Color 会触发 Image 重建，Color 字段改值不会)
+        private static readonly Color CloseColorHover = new Color(0.95f, 0.25f, 0.25f, 1f);
         private static readonly Color ActiveChapterColor = new Color(0.13f, 0.42f, 0.5f, 0.95f);
 
         public static PonderSceneView? Instance { get; private set; }
@@ -23,11 +28,17 @@ namespace Ponder
         private int _chapterIndex;
         private PonderSceneLogic? _logic;
 
+        // 自由编辑 (MC Ponder 风格万物皆可 Ponder)：设计师写在 JSON 里的 edits + 沙盒内
+        // 拖动产生的 edits 全部入栈。PlayCurrentChapterLogic 在每章节启动时 replay 至该章节；
+        // Close 时 RollbackAll 清空栈并把沙盒恢复到 Build 后的基准态。
+        private readonly List<PonderEdit> _editStack = new List<PonderEdit>();
+
         private RawImage? previewImage;
         private TMP_Text? titleText;
         private TMP_Text? chapterText;
         private TMP_Text? descText;
         private RectTransform? closeBtn;
+        private Image? closeHover;
         private RectTransform? prevBtn;
         private RectTransform? nextBtn;
         private RectTransform? backBtn;
@@ -37,6 +48,15 @@ namespace Ponder
 
         private bool _dragActive;
         private Vector3 _lastDragPos;
+
+        // 打开 Ponder 时临时禁用 scnEditor 整套 Update (含鼠标拖动/滚轮缩放等 raw input)，
+        // 否则 Ponder 沙盒视角与编辑器视角会被同时驱动、互相打架。仅 enabled=false 不够——
+        // scnEditor 同 GameObject 上其他 MonoBehaviour 仍可能在 Update 里继续拖动 camera，
+        // 所以把整 GameObject 一起 SetActive(false)，Ponder 关闭时再 SetActive(true) 恢复。
+        private scnEditor? _suppressedEditor;
+        private bool _suppressedEditorWasEnabled;
+        private GameObject? _suppressedEditorGo;
+        private bool _suppressedGoWasActive;
 
         private RectTransform? chapterBar;
         private readonly List<RectTransform> chapterButtons = new List<RectTransform>();
@@ -195,12 +215,13 @@ namespace Ponder
             nextRT.anchoredPosition = new Vector2(270f, 48f);
             nextRT.sizeDelta = new Vector2(90f, 52f);
 
-            closeBtn = AddButton(transform, font, "✕", CloseColor, 64f);
+            closeBtn = AddButton(transform, font, "✕", CloseColor, 36f);
             ((RectTransform)closeBtn).anchorMin = new Vector2(1f, 1f);
             ((RectTransform)closeBtn).anchorMax = new Vector2(1f, 1f);
             ((RectTransform)closeBtn).pivot = new Vector2(1f, 1f);
-            ((RectTransform)closeBtn).anchoredPosition = new Vector2(-48f, -44f);
-            ((RectTransform)closeBtn).sizeDelta = new Vector2(56f, 56f);
+            ((RectTransform)closeBtn).anchoredPosition = new Vector2(-32f, -32f);
+            ((RectTransform)closeBtn).sizeDelta = new Vector2(44f, 44f);
+            closeHover = closeBtn.GetComponent<Image>();
 
             backBtn = AddButton(transform, font, PonderLang.Get("ui.backToList", "◀ 场景列表"), ButtonColor, 24f);
             var backRT = (RectTransform)backBtn;
@@ -266,6 +287,7 @@ namespace Ponder
         {
             gameObject.SetActive(true);
             _dragActive = false;
+            SuppressEditorInput();
             CaptureBackground();
             if (scenes == null || scenes.Count == 0)
             {
@@ -281,6 +303,55 @@ namespace Ponder
             ShowEntry(scenes);
         }
 
+        /// <summary>
+        /// Ponder 打开期间禁用 scnEditor 整 GameObject：scnEditor.Update 用 Input.* 读
+        /// raw input 拖动 camera，同 GameObject 上其他 MonoBehaviour 也会继续处理 input；
+        /// 仅 enabled=false 不够，必须 SetActive(false) 才能彻底停掉视角/砖块/装饰的拖动。
+        /// LateUpdate 也不再刷新 levelEditorCanvas.enabled / FloorMesh，Ponder 沙盒
+        /// 自己有 RenderTexture + FloorMesh，不依赖 scnEditor 行为。
+        /// </summary>
+        private void SuppressEditorInput()
+        {
+            if (_suppressedEditor != null)
+            {
+                return;
+            }
+            var ed = ADOBase.editor;
+            if (ed == null)
+            {
+                return;
+            }
+            _suppressedEditor = ed;
+            _suppressedEditorWasEnabled = ed.enabled;
+            ed.enabled = false;
+            _suppressedEditorGo = ed.gameObject;
+            _suppressedGoWasActive = ed.gameObject.activeSelf;
+            if (_suppressedGoWasActive)
+            {
+                ed.gameObject.SetActive(false);
+            }
+            if (Main.Settings != null && Main.Settings.enableDebugLogs)
+            {
+                Main.Handler?.Log($"Ponder: suppressed scnEditor GO (wasEnabled={_suppressedEditorWasEnabled}, wasActive={_suppressedGoWasActive})");
+            }
+        }
+
+        /// <summary>恢复 scnEditor 整 GameObject 之前的状态，Ponder 关闭时调用。</summary>
+        private void RestoreEditorInput()
+        {
+            if (_suppressedEditor == null)
+            {
+                return;
+            }
+            if (_suppressedGoWasActive && _suppressedEditorGo != null)
+            {
+                _suppressedEditorGo.SetActive(true);
+            }
+            _suppressedEditor.enabled = _suppressedEditorWasEnabled;
+            _suppressedEditor = null;
+            _suppressedEditorGo = null;
+        }
+
         private void OpenScene(PonderSceneDef scene)
         {
             HideEntry();
@@ -292,6 +363,9 @@ namespace Ponder
                 Main.Handler?.Error("PonderSceneView: preview build failed");
                 return;
             }
+            // 收集场景里的静态 edits (设计师写在 JSON 里的) 入栈；运行时的拖动 edits 由 RecordEdit 加进来。
+            _editStack.Clear();
+            CollectStaticEdits(scene);
             if (previewImage != null && _preview.Texture != null)
             {
                 previewImage.texture = _preview.Texture;
@@ -448,12 +522,171 @@ namespace Ponder
             _preview.ResetTransforms();
             var chapter = _scene.ChapterAt(_chapterIndex);
             _preview.ShowNotes(chapter?.Notes);
+            // 在 ResetTransforms 之后、Logic 之前 replay 栈中所有属于该章节及之前章节的 edits，
+            // 这样 Logic 触发的视觉变化叠加在 edits 已应用的状态上。
+            ReplayEditsForChapter(_chapterIndex);
             // 重放后取景自动适配本章全部内容（砖块+装饰+指点），由章节内容本身决定相机
             _preview.FitTrack();
             if (chapter != null && chapter.Logic.Count > 0)
             {
                 _logic.Play(chapter.Logic);
             }
+        }
+
+        // ================= 自由编辑栈 =================
+
+        /// <summary>把一条 edit 立即作用到 Ponder 沙盒并入栈。沙盒内拖动产生的 edits 走这里。</summary>
+        public void RecordEdit(PonderEdit edit)
+        {
+            if (edit == null)
+            {
+                return;
+            }
+            _editStack.Add(edit);
+            _preview.ApplyEdit(edit);
+        }
+
+        /// <summary>从 base 状态重新 apply 栈中所有 Chapter &lt;= chapterIndex 的 edits。Chapter=-1 的 edit 视为全程生效。</summary>
+        private void ReplayEditsForChapter(int chapterIndex)
+        {
+            _preview.ResetEdits();
+            for (var i = 0; i < _editStack.Count; i++)
+            {
+                var e = _editStack[i];
+                if (e.Chapter < 0 || e.Chapter <= chapterIndex)
+                {
+                    _preview.ApplyEdit(e);
+                }
+            }
+        }
+
+        /// <summary>关闭 Ponder 时调用：清空栈并把 Ponder 沙盒重置回 Build 后的基准态。</summary>
+        private void RollbackAll()
+        {
+            _editStack.Clear();
+            _preview.ResetEdits();
+        }
+
+        /// <summary>把 scene 顶层 / 各 chapter 内 writes "edits" 字段的 JSON 解析入栈。</summary>
+        private void CollectStaticEdits(PonderSceneDef scene)
+        {
+            // 顶层 edits (Chapter=-1 视为全程生效)
+            foreach (var e in ReadEditsFromRaw(scene.Folder))
+            {
+                _editStack.Add(e);
+            }
+            // 每个 chapter 的 edits (字段写在 chapter 内的 "edits"，或单独 chapter 文件夹里的 edits.json)
+            if (scene.Chapters != null)
+            {
+                for (var i = 0; i < scene.Chapters.Count; i++)
+                {
+                    var chEdits = ReadEditsFromRaw(Path.Combine(scene.Folder, "chapter_" + (i + 1).ToString()));
+                    foreach (var e in chEdits)
+                    {
+                        if (e.Chapter < 0)
+                        {
+                            e.Chapter = i;
+                        }
+                        _editStack.Add(e);
+                    }
+                }
+            }
+        }
+        /// <summary>从场景文件夹里读 "edits.json"（数组，每项一个 PonderEdit）。缺省返回空。</summary>
+        private static List<PonderEdit> ReadEditsFromRaw(string folder)
+        {
+            var result = new List<PonderEdit>();
+            try
+            {
+                if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+                {
+                    return result;
+                }
+                var path = Path.Combine(folder, "edits.json");
+                if (!File.Exists(path))
+                {
+                    return result;
+                }
+                var list = PonderJson.GetList(Json.Deserialize(File.ReadAllText(path)));
+                if (list == null)
+                {
+                    return result;
+                }
+                foreach (var item in list)
+                {
+                    var d = PonderJson.GetDict(item);
+                    if (d == null)
+                    {
+                        continue;
+                    }
+                    var edit = new PonderEdit
+                    {
+                        Kind = PonderJson.GetString(d, "kind"),
+                        Chapter = PonderJson.GetInt(d, "chapter", -1),
+                        At = PonderJson.GetFloat(d, "at", -1f),
+                        Value = ParseV2(d.GetValueOrDefault("value")),
+                        ColorValue = ParseColor(d.GetValueOrDefault("color")),
+                        IntValue = PonderJson.GetInt(d, "int"),
+                    };
+                    if (PonderJson.GetDict(d.GetValueOrDefault("target")) is { } t)
+                    {
+                        ParseEditTarget(t, edit.Target);
+                    }
+                    if (edit.Kind.Length > 0)
+                    {
+                        result.Add(edit);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Main.Handler?.Error($"Ponder: read edits from {folder} failed\n{ex}");
+            }
+            return result;
+        }
+
+        /// <summary>解析 PonderEdit.target 字段到 PonderSelector (简化版，不支持 type=event/setting/decoration/floor 简写)。</summary>
+        private static void ParseEditTarget(Dictionary<string, object> dict, PonderSelector selector)
+        {
+            selector.Name = PonderJson.GetString(dict, "name");
+            selector.NameContains = PonderJson.GetString(dict, "nameContains");
+            selector.Tag = PonderJson.GetString(dict, "tag");
+            selector.DecoTag = PonderJson.GetString(dict, "decoTag");
+            selector.Component = PonderJson.GetString(dict, "component");
+            selector.Layer = PonderJson.GetString(dict, "layer");
+            selector.Event = PonderJson.GetString(dict, "event");
+            selector.Setting = PonderJson.GetString(dict, "setting");
+            selector.Image = PonderJson.GetString(dict, "image");
+            selector.Floor = PonderJson.GetBool(dict, "floor", false);
+            selector.Tile = PonderJson.GetInt(dict, "tile");
+        }
+
+        private static Vector2 ParseV2(object? v)
+        {
+            if (PonderJson.GetList(v) is { } list && list.Count >= 2)
+            {
+                return new Vector2(
+                    (float)Convert.ToDouble(list[0]),
+                    (float)Convert.ToDouble(list[1]));
+            }
+            return Vector2.zero;
+        }
+
+        private static Color ParseColor(object? v)
+        {
+            if (v is string s && ColorUtility.TryParseHtmlString(s, out var c))
+            {
+                return c;
+            }
+            if (PonderJson.GetList(v) is { } list && list.Count >= 3)
+            {
+                return new Color(
+                    Mathf.Clamp01((float)Convert.ToDouble(list[0])),
+                    Mathf.Clamp01((float)Convert.ToDouble(list[1])),
+                    Mathf.Clamp01((float)Convert.ToDouble(list[2])),
+                    list.Count >= 4 ? Mathf.Clamp01((float)Convert.ToDouble(list[3])) : 1f);
+            }
+            return Color.white;
         }
 
         private void ApplySceneText()
@@ -642,12 +875,30 @@ namespace Ponder
             return RectTransformUtility.RectangleContainsScreenPoint(rt, Input.mousePosition, null);
         }
 
+        /// <summary>
+        /// 鼠标悬停时把按钮 Image 颜色切到 hover 色，离开时回到常态色。
+        /// 仅在颜色真的改变时赋值，避免每帧 set dirty。
+        /// </summary>
+        private static void UpdateButtonHover(RectTransform rt, Image? img, Color normal, Color hover)
+        {
+            if (img == null)
+            {
+                return;
+            }
+            var want = IsPointIn(rt) ? hover : normal;
+            if (img.color != want)
+            {
+                img.color = want;
+            }
+        }
+
         public void Tick()
         {
             if (!_open)
             {
                 return;
             }
+            UpdateButtonHover(closeBtn, closeHover, CloseColor, CloseColorHover);
             if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
             {
                 Close();
@@ -755,8 +1006,11 @@ namespace Ponder
             HideEntry();
             _logic?.Stop();
             _logic = null;
+            // 关闭 Ponder 时丢弃所有 edits (静态 + 沙盒内拖动) 并把沙盒回滚到 base 状态。
+            RollbackAll();
             _preview.Clear();
             _scene = null;
+            RestoreEditorInput();
             if (_bgTexture != null)
             {
                 UnityEngine.Object.Destroy(_bgTexture);

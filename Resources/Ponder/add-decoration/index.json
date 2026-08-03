@@ -1,0 +1,95 @@
+{
+  "id": "add-decoration",
+  "title": {
+    "zh_cn": "添加装饰",
+    "en_us": "AddDecoration"
+  },
+  "description": {
+    "zh_cn": "把一个装饰物放到某块砖上，永久显示",
+    "en_us": "Place a decoration on a tile, kept permanently"
+  },
+  "zoom": 3.4,
+  "spawnStagger": 0.18,
+  "tiles": [
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 90, "style": 1 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 }
+  ],
+  "decos": [],
+  "chapters": [
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 1 章 · 概览</b>\n{AddDecoration} 在指定 {tile} 上添加一个装饰物，<b>永久显示</b>。\n核心字段：{decorationImage}（用什么图）+ {tile}（放在哪）。\n要清除：再用 {MoveDecorations} 把它移出屏外，或用 {opacity}=0 让它透明。",
+        "en_us": "<b>Chapter 1 · Overview</b>\n{AddDecoration} adds a decoration on the given {tile}, displayed <b>permanently</b>.\nCore fields: {decorationImage} (which image) + {tile} (where).\nTo remove: use {MoveDecorations} to push it off-screen, or set {opacity}=0 to hide it."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{tile}=2\n放在这里", "en_us": "{tile}=2\nplaced here" }, "tile": 2, "textX": 1.4, "textY": 0.85, "targetX": 0.4, "targetY": 0.3, "color": "#FFD24A" }
+      ],
+      "logic": [
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "AddDecoration", "floor": 0, "tile": 2, "decorationImage": "builtin:arrow", "position": [0, 0.4], "scale": 100, "rotation": 0, "depth": 1, "color": "#FFFFFF", "opacity": 100, "duration": 0.6, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.4 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 2 章 · {position} 相对位置</b>\n{position}=[x, y] 是相对 {tile} 中心的偏移：\nx 沿轨道，y 垂直轨道。\n下面演示三个不同 {position}：[0, 0.5] 上方 / [0, -0.5] 下方 / [0.5, 0] 右侧。",
+        "en_us": "<b>Chapter 2 · {position} (relative offset)</b>\n{position}=[x, y] is offset from the {tile}'s center:\nx along the track, y perpendicular.\nThree positions demo: [0, 0.5] above / [0, -0.5] below / [0.5, 0] right."
+      },
+      "notes": [
+        { "text": { "zh_cn": "[0, 0.5]\n上方", "en_us": "[0, 0.5]\nabove" }, "tile": 1, "textX": 0, "textY": 1.25, "targetX": 0, "targetY": 0.5, "color": "#90CAF9" },
+        { "text": { "zh_cn": "[0, -0.5]\n下方", "en_us": "[0, -0.5]\nbelow" }, "tile": 4, "textX": 0, "textY": -0.65, "targetX": 0, "targetY": -0.3, "color": "#A5D6A7" },
+        { "text": { "zh_cn": "[0.5, 0]\n右侧", "en_us": "[0.5, 0]\nright" }, "tile": 7, "textX": 1.2, "textY": 0.5, "targetX": 0.3, "targetY": 0.2, "color": "#CE93D8" }
+      ],
+      "logic": [
+        { "eventType": "AddDecoration", "floor": 0, "tile": 1, "decorationImage": "builtin:dot", "position": [0, 0.5], "scale": 80, "color": "#90CAF9", "opacity": 100, "duration": 0.5, "ease": "OutCubic" },
+        { "eventType": "AddDecoration", "floor": 0, "tile": 4, "decorationImage": "builtin:dot", "position": [0, -0.5], "scale": 80, "color": "#A5D6A7", "opacity": 100, "duration": 0.5, "ease": "OutCubic" },
+        { "eventType": "AddDecoration", "floor": 0, "tile": 7, "decorationImage": "builtin:dot", "position": [0.5, 0], "scale": 80, "color": "#CE93D8", "opacity": 100, "duration": 0.5, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 3 章 · {scale}、{rotation}、{depth}</b>\n{scale}：大小，0~100（绝对目标）。100=原大小。\n{rotation}：角度。\n{depth}：层级，越大越靠前（覆盖其它装饰）。",
+        "en_us": "<b>Chapter 3 · {scale}, {rotation}, {depth}</b>\n{scale}: size, 0~100 (absolute). 100 = original.\n{rotation}: angle in degrees.\n{depth}: z-order; larger is on top."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{scale}=60", "en_us": "{scale}=60" }, "tile": 1, "textX": 1.4, "textY": 0.85, "targetX": 0.4, "targetY": 0.3, "color": "#FFD24A" },
+        { "text": { "zh_cn": "{rotation}=45°", "en_us": "{rotation}=45°" }, "tile": 4, "textX": 1.4, "textY": 0.85, "targetX": 0.4, "targetY": 0.3, "color": "#FFD24A" }
+      ],
+      "logic": [
+        { "eventType": "AddDecoration", "floor": 0, "tile": 1, "decorationImage": "builtin:arrow", "position": [0, 0.5], "scale": 60, "rotation": 0, "depth": 0, "color": "#FFD24A", "opacity": 100, "duration": 0.5, "ease": "OutCubic" },
+        { "eventType": "AddDecoration", "floor": 0, "tile": 4, "decorationImage": "builtin:arrow", "position": [0, 0.5], "scale": 100, "rotation": 45, "depth": 1, "color": "#FFD24A", "opacity": 100, "duration": 0.5, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.4 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 4 章 · {color}、{opacity}、{tag}</b>\n{color}：装饰物颜色（HEX）。\n{opacity}：不透明度，0~100。\n{tag}：标签名，可用 {MoveDecorations} / {opacity} 事件按 tag 批量操作。",
+        "en_us": "<b>Chapter 4 · {color}, {opacity}, {tag}</b>\n{color}: decoration tint (HEX).\n{opacity}: 0~100.\n{tag}: a name you can target with {MoveDecorations} or future batch events."
+      },
+      "notes": [
+        { "text": { "zh_cn": "tag=\"arrow\"", "en_us": "tag=\"arrow\"" }, "tile": 4, "textX": 0, "textY": 1.05, "targetX": 0, "targetY": 0.3, "color": "#B39DDB" }
+      ],
+      "logic": [
+        { "eventType": "AddDecoration", "floor": 0, "tile": 0, "decorationImage": "builtin:arrow", "position": [0, 0.5], "scale": 80, "color": "#F48FB1", "opacity": 100, "tag": "arrow", "duration": 0.5, "ease": "OutCubic" },
+        { "eventType": "AddDecoration", "floor": 0, "tile": 3, "decorationImage": "builtin:arrow", "position": [0, 0.5], "scale": 80, "color": "#F48FB1", "opacity": 100, "tag": "arrow", "duration": 0.5, "ease": "OutCubic" },
+        { "eventType": "AddDecoration", "floor": 0, "tile": 6, "decorationImage": "builtin:arrow", "position": [0, 0.5], "scale": 80, "color": "#F48FB1", "opacity": 100, "tag": "arrow", "duration": 0.5, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.0 },
+        { "eventType": "MoveDecorations", "floor": 0, "tag": "arrow", "positionOffset": [0, 0.4], "duration": 0.6, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "MoveDecorations", "floor": 0, "tag": "arrow", "positionOffset": [0, 0], "duration": 0.6, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 }
+      ]
+    }
+  ]
+}

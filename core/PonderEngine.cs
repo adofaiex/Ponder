@@ -375,9 +375,32 @@ namespace Ponder
                     note.LineEndX = (float)Convert.ToDouble(lineEnd[0]);
                     note.LineEndY = (float)Convert.ToDouble(lineEnd[1]);
                 }
+                // 模式 2 (世界自由定位) 字段；解析失败则保持缺省 (-1/-1000) → 走模式 1。
+                note.WorldPos = ParseVector2(d.GetValueOrDefault("worldPos"), note.WorldPos);
+                note.WorldTarget = ParseVector2(d.GetValueOrDefault("worldTarget"), note.WorldTarget);
+                note.Pivot = ParseVector2(d.GetValueOrDefault("pivot"), note.Pivot);
                 notes.Add(note);
             }
             return notes;
+        }
+
+        /// <summary>从 JSON 数组 [x, y] 读 Vector2，缺省或解析失败时返回 fallback。</summary>
+        private static Vector2 ParseVector2(object? value, Vector2 fallback)
+        {
+            if (PonderJson.GetList(value) is not { } list || list.Count < 2)
+            {
+                return fallback;
+            }
+            try
+            {
+                return new Vector2(
+                    (float)Convert.ToDouble(list[0]),
+                    (float)Convert.ToDouble(list[1]));
+            }
+            catch
+            {
+                return fallback;
+            }
         }
 
         public static List<PonderLogicCommand> ParseLogic(List<object>? list)
@@ -602,6 +625,11 @@ namespace Ponder
             if (string.IsNullOrEmpty(path))
             {
                 return null;
+            }
+            // 内置 sprite：builtin:arrow / builtin:dot / builtin:ring —— 不依赖磁盘文件
+            if (path.StartsWith("builtin:", System.StringComparison.Ordinal))
+            {
+                return PonderSprites.Builtin(path.Substring("builtin:".Length));
             }
             var full = Path.Combine(def.Folder, path);
             lock (_imageCache)

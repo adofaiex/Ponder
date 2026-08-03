@@ -2,14 +2,14 @@
   "id": "move-track",
   "title": {
     "zh_cn": "移动轨道",
-    "en_us": "Move Track"
+    "en_us": "MoveTrack"
   },
   "description": {
-    "zh_cn": "像官方 Create 一样逐章讲解移动轨道：构成 → 范围 → 各属性 → 缓动",
-    "en_us": "A Create-style chapter-by-chapter MoveTrack tutorial: build-up, range, each property, easing"
+    "zh_cn": "在一段时间内把一段轨道改到一个目标状态，之后永久保持该状态",
+    "en_us": "Animate a section of the track to a target state over time, then keep it permanently"
   },
   "zoom": 3.4,
-  "spawnStagger": 0.22,
+  "spawnStagger": 0.18,
   "target": {
     "type": "event",
     "event": "MoveTrack"
@@ -24,137 +24,171 @@
     { "angle": 0, "style": 0 },
     { "angle": 0, "style": 0 }
   ],
-  "decos": [
-    { "image": "arrow", "tag": "range", "tile": 1, "offsetX": 0, "offsetY": 0.4, "scale": 0.8, "rotation": -90, "depth": 1 },
-    { "image": "arrow", "tag": "range", "tile": 4, "offsetX": 0, "offsetY": 0.4, "scale": 0.8, "rotation": -90, "depth": 1 }
-  ],
+  "decos": [],
   "chapters": [
     {
       "floor": 0,
       "text": {
-        "zh_cn": "一条轨道由一块块{tile}依次拼成：先出现第 0 块，其余砖块丝滑追加",
-        "en_us": "A track is a row of {tile}s: tile 0 appears first, then the rest are added smoothly"
+        "zh_cn": "<b>第 1 章 · 概览</b>\n{MoveTrack} 在一段 {duration} 内把范围内的 {tile} 平滑过渡到目标状态，\n结束后 <b>永久保持</b> 那个状态，<b>不会自动回原</b>。\n要恢复原状，需再发一个 {MoveTrack} 把值设回去。",
+        "en_us": "<b>Chapter 1 · Overview</b>\n{MoveTrack} smoothly transitions a {range} of {tile}s to a target state over {duration},\nthen <b>keeps that state permanently</b> — it does <b>not</b> auto-restore.\nTo restore, send another {MoveTrack} with values set back to the original."
       },
       "notes": [
-        { "text": { "zh_cn": "这是第 0 个{tile}，轨道的起点", "en_us": "Tile 0 — the start of the track" }, "tile": 0, "textX": 1.7, "textY": 1.0, "targetX": 0.3, "targetY": 0.3 },
-        { "text": { "zh_cn": "转角处的砖块", "en_us": "A tile that turns" }, "tile": 5, "textX": 1.5, "textY": 0.9, "targetX": 0.4, "targetY": 0.3, "color": "#FFD24A" }
+        { "text": { "zh_cn": "永久保持", "en_us": "stays" }, "tile": 2, "textX": 1.6, "textY": 0.9, "targetX": 0.4, "targetY": 0.3, "color": "#FFD24A" }
       ],
       "logic": [
-        { "cmd": "Wait", "floor": 0, "duration": 1.4 },
-        { "cmd": "AddTiles", "floor": 0, "tile": 7, "tiles": [ { "angle": -90, "style": 1 }, { "angle": 0, "style": 0 }, { "angle": 0, "style": 0 } ] },
-        { "eventType": "RecolorTrack", "floor": 0, "startTile": 8, "endTile": 10, "trackColor": "#FF5252", "duration": 0.5, "ease": "InOutQuad" },
-        { "cmd": "Wait", "floor": 0, "duration": 1.0 }
-      ]
-    },
-    {
-      "floor": 1,
-      "text": {
-        "zh_cn": "{MoveTrack} 只作用于 {startTile} 到 {endTile} 之间这块区域（含两端），范围外的{tile}不受影响",
-        "en_us": "{MoveTrack} only affects the region from {startTile} to {endTile} (inclusive); tiles outside are untouched"
-      },
-      "notes": [
-        { "text": { "zh_cn": "{startTile}=1，从这里开始", "en_us": "starts here, {startTile}=1" }, "tile": 1, "textX": 1.6, "textY": 0.8, "targetX": 0.4, "targetY": 0.3 },
-        { "text": { "zh_cn": "{endTile}=4，到这里结束", "en_us": "ends here, {endTile}=4" }, "tile": 4, "textX": -1.5, "textY": 0.8, "targetX": -0.4, "targetY": 0.3, "color": "#FFD24A" },
-        { "text": { "zh_cn": "范围外，不会动", "en_us": "outside the range, stays put" }, "tile": 0, "textX": 0, "textY": 1.2, "targetX": 0, "targetY": 0.35, "color": "#90A4AE" }
-      ],
-      "logic": [
-        { "eventType": "RecolorTrack", "floor": 1, "startTile": 1, "endTile": 4, "trackColor": "#FFD24A", "duration": 0.6, "ease": "InOutQuad" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "positionOffset": [0.5, 0], "duration": 0.9, "ease": "OutCubic" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "positionOffset": [0, 0], "duration": 0.9, "ease": "InCubic", "delay": 0.3 }
-      ]
-    },
-    {
-      "floor": 1,
-      "text": {
-        "zh_cn": "{positionOffset}：把范围内砖块整体平移；位移是相对每块砖原本的位置，做完会回到原位",
-        "en_us": "{positionOffset}: shift the tiles in the range; each tile moves relative to its original position, then returns"
-      },
-      "notes": [
-        { "text": { "zh_cn": "范围 {startTile}=1 … {endTile}=4", "en_us": "Range {startTile}=1 … {endTile}=4" }, "tile": 1, "textX": 1.4, "textY": 0.8, "targetX": 0.4, "targetY": 0.3 },
-        { "text": { "zh_cn": "这 4 块一起平移", "en_us": "these tiles shift together" }, "tile": 4, "textX": -1.4, "textY": 0.8, "targetX": -0.4, "targetY": 0.3, "color": "#FFD24A" }
-      ],
-      "logic": [
-        { "eventType": "RecolorTrack", "floor": 1, "startTile": 1, "endTile": 4, "trackColor": "#FFD24A", "duration": 0.6, "ease": "InOutQuad" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "positionOffset": [0.6, 0], "duration": 0.9, "ease": "OutCubic" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "positionOffset": [0, 0], "duration": 0.9, "ease": "InCubic", "delay": 0.3 }
-      ]
-    },
-    {
-      "floor": 1,
-      "text": {
-        "zh_cn": "{rotationOffset}：把范围内砖块旋转；角度是相对每块砖原本的角度，转完会转回原位",
-        "en_us": "{rotationOffset}: rotate the tiles in the range; the angle is relative to each tile's original angle, then returns"
-      },
-      "notes": [
-        { "text": { "zh_cn": "{rotationOffset}=20°，相对原角度转", "en_us": "{rotationOffset}=20° from the original angle" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25 }
-      ],
-      "logic": [
-        { "eventType": "RecolorTrack", "floor": 1, "startTile": 1, "endTile": 4, "trackColor": "#4FC3F7", "duration": 0.6, "ease": "InOutQuad" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "rotationOffset": 20, "duration": 1.0, "ease": "OutBack" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "rotationOffset": 0, "duration": 1.0, "ease": "InOutQuad", "delay": 0.4 }
-      ]
-    },
-    {
-      "floor": 1,
-      "text": {
-        "zh_cn": "{scale}：缩放范围内砖块；相对原本的大小（官方值 0~100，内部按 /100）",
-        "en_us": "{scale}: scale the tiles in the range, relative to their original size (official 0~100, divided by 100)"
-      },
-      "notes": [
-        { "text": { "zh_cn": "{scale}=60 → 缩小到原本的 60%", "en_us": "{scale}=60 → shrinks to 60%" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#81C784" }
-      ],
-      "logic": [
-        { "eventType": "RecolorTrack", "floor": 1, "startTile": 1, "endTile": 4, "trackColor": "#81C784", "duration": 0.6, "ease": "InOutQuad" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "scale": 60, "duration": 0.9, "ease": "OutCubic" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "scale": 100, "duration": 0.9, "ease": "OutBack", "delay": 0.3 }
-      ]
-    },
-    {
-      "floor": 1,
-      "text": {
-        "zh_cn": "{opacity}：范围内砖块变透明；相对原本的不透明度（官方值 0~100，内部按 /100，0 完全透明）",
-        "en_us": "{opacity}: fade the tiles in the range, relative to their original opacity (official 0~100, divided by 100; 0 = invisible)"
-      },
-      "notes": [
-        { "text": { "zh_cn": "{opacity}=20 → 几乎看不见", "en_us": "{opacity}=20 → almost invisible" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#FF8A80" }
-      ],
-      "logic": [
-        { "eventType": "RecolorTrack", "floor": 1, "startTile": 1, "endTile": 4, "trackColor": "#FF8A80", "duration": 0.6, "ease": "InOutQuad" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "opacity": 20, "duration": 0.9, "ease": "OutCubic" },
-        { "eventType": "MoveTrack", "floor": 1, "startTile": 1, "endTile": 4, "opacity": 100, "duration": 0.9, "ease": "InCubic", "delay": 0.3 }
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 1, "endTile": 4, "positionOffset": [0, 0.4], "scale": 70, "rotationOffset": 15, "duration": 0.8, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.6 }
       ]
     },
     {
       "floor": 0,
       "text": {
-        "zh_cn": "{gapLength}：每隔 {gapLength}+1 块才生效，用来做跳格（间隔）效果",
-        "en_us": "{gapLength}: applies every {gapLength}+1 tiles — great for interval/alternating effects"
+        "zh_cn": "<b>第 2 章 · 范围</b>\n{MoveTrack} 只影响 {startTile} 到 {endTile} 之间的 {tile}（含两端）。\n{range} 之外的 {tile} 完全不动。",
+        "en_us": "<b>Chapter 2 · Range</b>\n{MoveTrack} only affects {tile}s from {startTile} to {endTile} (inclusive).\n{tile}s outside the {range} stay untouched."
       },
       "notes": [
-        { "text": { "zh_cn": "{gapLength}=1 → 只动第 0、2、4、6 块", "en_us": "{gapLength}=1 → only tiles 0,2,4,6 move" }, "tile": 4, "textX": 0, "textY": 0.9, "targetX": 0, "targetY": 0.3, "color": "#B39DDB" }
+        { "text": { "zh_cn": "{startTile}=1 · 从这里开始", "en_us": "{startTile}=1 · starts here" }, "tile": 1, "textX": 1.6, "textY": 0.85, "targetX": 0.4, "targetY": 0.3, "color": "#FFD24A" },
+        { "text": { "zh_cn": "{endTile}=4 · 到这里结束", "en_us": "{endTile}=4 · ends here" }, "tile": 4, "textX": -1.5, "textY": 0.85, "targetX": -0.4, "targetY": 0.3, "color": "#FFD24A" },
+        { "text": { "zh_cn": "范围外 · 不动", "en_us": "outside · still" }, "tile": 0, "textX": 0, "textY": 1.1, "targetX": 0, "targetY": 0.35, "color": "#90A4AE" }
       ],
       "logic": [
-        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#B39DDB", "duration": 0.6, "ease": "InOutQuad" },
-        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 6, "gapLength": 1, "positionOffset": [0, 0.5], "duration": 0.9, "ease": "OutCubic" },
-        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 6, "gapLength": 1, "positionOffset": [0, 0], "duration": 0.9, "ease": "InCubic", "delay": 0.3 }
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 1, "endTile": 4, "trackColor": "#FFD24A", "duration": 0.5, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 1, "endTile": 4, "positionOffset": [0, 0.4], "duration": 0.9, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.6 }
       ]
     },
     {
       "floor": 0,
       "text": {
-        "zh_cn": "{ease}：决定移动的节奏；同样的位移，缓动不同，手感完全不同",
-        "en_us": "{ease}: decides the rhythm of the motion; the same shift feels totally different with different easings"
+        "zh_cn": "<b>第 3 章 · {positionOffset}（位置偏移）</b>\nx 沿轨道方向，y 垂直轨道。\n偏移相对 {tile} 的<b>原始位置</b>叠加，<b>永久保持</b>。\n要恢复：再发一个 {MoveTrack}，把 {positionOffset} 设为 [0, 0]。",
+        "en_us": "<b>Chapter 3 · {positionOffset}</b>\nx is along the track, y is perpendicular.\nThe offset is added on top of each {tile}'s <b>original position</b>, kept <b>permanently</b>.\nTo restore: send another {MoveTrack} with {positionOffset} = [0, 0]."
       },
       "notes": [
-        { "text": { "zh_cn": "{OutBack}：会先冲过头再回弹", "en_us": "{OutBack} overshoots then springs back" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#CE93D8" },
-        { "text": { "zh_cn": "{OutBounce}：像球落地一样弹跳", "en_us": "{OutBounce} bounces like a ball on landing" }, "tile": 5, "textX": 1.6, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#CE93D8" }
+        { "text": { "zh_cn": "x 方向：向右", "en_us": "x axis: rightward" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#4FC3F7" },
+        { "text": { "zh_cn": "y 方向：向上", "en_us": "y axis: upward" }, "tile": 6, "textX": 0, "textY": 1.4, "targetX": 0, "targetY": 0.4, "color": "#4FC3F7" }
       ],
       "logic": [
-        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#CE93D8", "duration": 0.6, "ease": "InOutQuad" },
-        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 2, "positionOffset": [0, 0.7], "duration": 1.0, "ease": "OutBack" },
-        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 2, "positionOffset": [0, 0], "duration": 1.0, "ease": "InCubic", "delay": 0.4 },
-        { "eventType": "MoveTrack", "floor": 3, "startTile": 3, "endTile": 4, "positionOffset": [0, 0.7], "duration": 1.0, "ease": "OutBounce" },
-        { "eventType": "MoveTrack", "floor": 3, "startTile": 3, "endTile": 4, "positionOffset": [0, 0], "duration": 1.0, "ease": "InCubic", "delay": 0.4 }
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#4FC3F7", "duration": 0.5, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0.6, 0], "duration": 0.9, "ease": "OutCubic" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 4, "endTile": 7, "positionOffset": [0, 0.6], "duration": 0.9, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0, 0], "duration": 0.8, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 4, "endTile": 7, "positionOffset": [0, 0], "duration": 0.8, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 4 章 · {rotationOffset}（角度偏移）</b>\n每块 {tile} 相对自己<b>原始角度</b>额外转多少度。\n正数顺时针，负数逆时针；<b>永久保持</b>，不会自动回正。",
+        "en_us": "<b>Chapter 4 · {rotationOffset}</b>\nEach {tile} rotates by an extra angle relative to its <b>original angle</b>.\nPositive = clockwise, negative = counter-clockwise. Kept <b>permanently</b>."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{rotationOffset}=20°", "en_us": "{rotationOffset}=20°" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#CE93D8" },
+        { "text": { "zh_cn": "{rotationOffset}=-20°", "en_us": "{rotationOffset}=-20°" }, "tile": 6, "textX": -1.4, "textY": 0.7, "targetX": -0.4, "targetY": 0.25, "color": "#CE93D8" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#CE93D8", "duration": 0.5, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "rotationOffset": 20, "duration": 1.0, "ease": "OutBack" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 4, "endTile": 7, "rotationOffset": -20, "duration": 1.0, "ease": "OutBack" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "rotationOffset": 0, "duration": 0.9, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 4, "endTile": 7, "rotationOffset": 0, "duration": 0.9, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.5 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 5 章 · {scale}（缩放）</b>\n{scale} 是<b>绝对目标值</b>，0~100。\n100 = 原大小，50 = 一半，0 = 缩成一个点。\n要恢复：再发一个 {MoveTrack}，把 {scale} 设为 100。",
+        "en_us": "<b>Chapter 5 · {scale}</b>\n{scale} is an <b>absolute target</b> in 0~100.\n100 = original, 50 = half, 0 = a single point.\nTo restore: send another {MoveTrack} with {scale} = 100."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{scale}=60 · 缩到 60%", "en_us": "{scale}=60 · 60%" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#81C784" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#81C784", "duration": 0.5, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 7, "scale": 60, "duration": 0.9, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 7, "scale": 100, "duration": 0.9, "ease": "OutBack" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 6 章 · {opacity}（不透明度）</b>\n{opacity} 是<b>绝对目标值</b>，0~100。\n0 = 完全透明，100 = 不透明。\n要恢复：再发一个 {MoveTrack}，把 {opacity} 设为 100。",
+        "en_us": "<b>Chapter 6 · {opacity}</b>\n{opacity} is an <b>absolute target</b> in 0~100.\n0 = invisible, 100 = opaque.\nTo restore: send another {MoveTrack} with {opacity} = 100."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{opacity}=20 · 几乎看不见", "en_us": "{opacity}=20 · nearly invisible" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#FF8A80" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FF8A80", "duration": 0.5, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 7, "opacity": 20, "duration": 0.9, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 7, "opacity": 100, "duration": 0.9, "ease": "InCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 7 章 · {gapLength}（跳格）</b>\n{gapLength}=0：范围内每块都动。\n{gapLength}=1：只动第 0、2、4、6 块（每隔一块）。\n{gapLength}=2：只动第 0、3、6 块。\n跳格只决定哪些 {tile} 受到本次 {MoveTrack} 影响，与永久保持无关。",
+        "en_us": "<b>Chapter 7 · {gapLength}</b>\n{gapLength}=0: every {tile} in {range} moves.\n{gapLength}=1: tiles 0, 2, 4, 6 move (every other).\n{gapLength}=2: tiles 0, 3, 6 move.\n{gapLength} only picks which {tile}s this {MoveTrack} touches — it does not affect the permanent state."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{gapLength}=1\n只动偶数 {tile}", "en_us": "{gapLength}=1\nonly even {tile}s" }, "tile": 4, "textX": 0, "textY": 1.05, "targetX": 0, "targetY": 0.3, "color": "#B39DDB" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#B39DDB", "duration": 0.5, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 7, "gapLength": 1, "positionOffset": [0, 0.5], "duration": 0.9, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 7, "gapLength": 1, "positionOffset": [0, 0], "duration": 0.9, "ease": "InCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 8 章 · {ease}（缓动）与 {duration}（时长）</b>\n{duration} 决定从当前状态过渡到目标状态要多少秒。\n{ease} 决定这段过渡的曲线：\n· {OutBack}：先冲过头再回弹\n· {OutBounce}：像球落地一样弹跳\n· {linear}：匀速\n同样的 {positionOffset}，{ease} 不同手感完全不同。\n<b>注意：{ease} 只影响过渡，不影响最终状态</b>。",
+        "en_us": "<b>Chapter 8 · {ease} & {duration}</b>\n{duration} sets how long the transition takes.\n{ease} sets the motion curve:\n· {OutBack}: overshoot, then spring back\n· {OutBounce}: bounces like a falling ball\n· {linear}: constant speed\nThe same {positionOffset} feels different with different {ease}.\n<b>Note: {ease} affects the transition only, not the final state.</b>"
+      },
+      "notes": [
+        { "text": { "zh_cn": "{OutBack}", "en_us": "{OutBack}" }, "tile": 1, "textX": 1.5, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#F48FB1" },
+        { "text": { "zh_cn": "{OutBounce}", "en_us": "{OutBounce}" }, "tile": 4, "textX": -1.5, "textY": 0.7, "targetX": -0.4, "targetY": 0.25, "color": "#F48FB1" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#F48FB1", "duration": 0.5, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0, 0.6], "duration": 1.0, "ease": "OutBack" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 4, "endTile": 7, "positionOffset": [0, 0.6], "duration": 1.0, "ease": "OutBounce" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0, 0], "duration": 1.0, "ease": "InCubic" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 4, "endTile": 7, "positionOffset": [0, 0], "duration": 1.0, "ease": "InCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.5 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 9 章 · 多次调用与覆盖</b>\n因为 {MoveTrack} 是永久状态，对同一 {tile} 再发一次 {MoveTrack} 会：\n· 取消上一次过渡（如果还在进行）\n· 启动新一次过渡到新目标\n· 完成后保持<b>新</b>目标\n也就是说：<b>后一次覆盖前一次的最终值</b>，而不是撤销。",
+        "en_us": "<b>Chapter 9 · Multiple calls & override</b>\nSince {MoveTrack} is a permanent state, sending another {MoveTrack} on the same {tile} will:\n· cancel the previous transition (if still in progress)\n· start a new transition to the new target\n· keep the <b>new</b> target afterwards\nIn short: the later call <b>overrides</b> the previous final value, it does not undo it."
+      },
+      "notes": [
+        { "text": { "zh_cn": "第 1 次：y+0.6", "en_us": "1st: y+0.6" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#90CAF9" },
+        { "text": { "zh_cn": "第 2 次：y-0.3", "en_us": "2nd: y-0.3" }, "tile": 2, "textX": 1.4, "textY": 1.2, "targetX": 0.4, "targetY": 0.25, "color": "#A5D6A7" },
+        { "text": { "zh_cn": "最终：y=-0.3", "en_us": "final: y=-0.3" }, "tile": 2, "textX": 1.4, "textY": 1.7, "targetX": 0.4, "targetY": 0.25, "color": "#FFD24A" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#90CAF9", "duration": 0.4, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0, 0.6], "duration": 1.2, "ease": "OutBack" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.5 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 3, "trackColor": "#A5D6A7", "duration": 0.3, "ease": "InOutQuad" },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0, -0.3], "duration": 1.0, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.5 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 3, "trackColor": "#FFD24A", "duration": 0.3, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 }
       ]
     }
   ]

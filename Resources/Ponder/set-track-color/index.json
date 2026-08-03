@@ -1,0 +1,77 @@
+{
+  "id": "set-track-color",
+  "title": {
+    "zh_cn": "瞬时改色",
+    "en_us": "SetTrackColor"
+  },
+  "description": {
+    "zh_cn": "瞬间把一段轨道的颜色改到目标色，不带过渡",
+    "en_us": "Instantly recolor a section of the track to a target color, with no transition"
+  },
+  "zoom": 3.4,
+  "spawnStagger": 0.18,
+  "tiles": [
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 90, "style": 1 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 }
+  ],
+  "decos": [],
+  "chapters": [
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 1 章 · 概览</b>\n{SetTrackColor} 与 {RecolorTrack} 字段完全一样，但 <b>没有 {duration}</b>、<b>没有 {ease}</b>：\n事件触发的瞬间，范围内的 {tile} 直接跳到目标色。\n用途：关卡开始时给一段轨道定一个静态底色。",
+        "en_us": "<b>Chapter 1 · Overview</b>\n{SetTrackColor} takes exactly the same fields as {RecolorTrack}, but has <b>no {duration}</b> and <b>no {ease}</b>:\nThe moment the event fires, the {tile}s in {range} jump directly to the target color.\nUse it to set a static base color at the start of a level."
+      },
+      "notes": [
+        { "text": { "zh_cn": "瞬间跳色", "en_us": "instant" }, "tile": 4, "textX": 0, "textY": 1.0, "targetX": 0, "targetY": 0.3, "color": "#FF6B6B" }
+      ],
+      "logic": [
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 },
+        { "eventType": "SetTrackColor", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#4FC3F7" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 2 章 · vs {RecolorTrack}</b>\n两次 {RecolorTrack} 都需要 {duration} 渐变；\n{SetTrackColor} <b>省略</b> 了 {duration}，单帧完成。\n下面先后演示两种：先 {SetTrackColor}（无渐变），再 {RecolorTrack}（平滑渐变）。",
+        "en_us": "<b>Chapter 2 · vs {RecolorTrack}</b>\n{RecolorTrack} always needs {duration} to transition.\n{SetTrackColor} <b>omits</b> {duration} and completes in one frame.\nWe demo both: {SetTrackColor} first (no transition), then {RecolorTrack} (smooth)."
+      },
+      "notes": [
+        { "text": { "zh_cn": "无渐变", "en_us": "no transition" }, "tile": 0, "textX": 0, "textY": 1.0, "targetX": 0, "targetY": 0.3, "color": "#FF6B6B" },
+        { "text": { "zh_cn": "有渐变", "en_us": "with transition" }, "tile": 0, "textX": 0, "textY": 1.0, "targetX": 0, "targetY": 0.3, "color": "#81C784" }
+      ],
+      "logic": [
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "SetTrackColor", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FF6B6B" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "SetTrackColor", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FFFFFF" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.3 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#81C784", "duration": 1.0, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.0 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 3 章 · 范围与跳格</b>\n与 {RecolorTrack} 相同：\n{startTile} / {endTile} 决定 {range}，{gapLength} 决定哪些 {tile} 染色。",
+        "en_us": "<b>Chapter 3 · Range & gap</b>\nSame as {RecolorTrack}:\n{startTile} / {endTile} set the {range}; {gapLength} picks which {tile}s get colored."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{startTile}=1\n{endTile}=6\n{gapLength}=1", "en_us": "{startTile}=1\n{endTile}=6\n{gapLength}=1" }, "tile": 4, "textX": 0, "textY": 1.1, "targetX": 0, "targetY": 0.3, "color": "#FFD24A" }
+      ],
+      "logic": [
+        { "eventType": "SetTrackColor", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FFFFFF" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.3 },
+        { "eventType": "SetTrackColor", "floor": 0, "startTile": 1, "endTile": 6, "trackColor": "#CE93D8", "gapLength": 1 },
+        { "cmd": "Wait", "floor": 0, "duration": 1.6 }
+      ]
+    }
+  ]
+}

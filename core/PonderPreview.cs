@@ -127,6 +127,198 @@ namespace Ponder
             return index >= 0 && index < _tileColors.Count ? _tileColors[index] : Color.white;
         }
 
+        // ================= 自由编辑 (MC Ponder 风格万物皆可 Ponder) =================
+
+        /// <summary>
+        /// 把一次 PonderEdit 作用到当前 Ponder 沙盒上。会修改 _tileExtra/_tileScale 等运行时字段
+        /// 并立刻调一次 ApplyTransforms 让 GameObject 同步。Target 解析为沙盒内 tile/deco 索引。
+        /// 调用方负责记录 edit 到栈里（PonderSceneView 维护），便于章节切换时 replay / 关闭时 rollback。
+        /// </summary>
+        public void ApplyEdit(PonderEdit edit)
+        {
+            if (edit == null || string.IsNullOrEmpty(edit.Kind))
+            {
+                return;
+            }
+            switch (edit.Kind)
+            {
+                case "TileExtra":
+                {
+                    var i = ResolveTileIndex(edit.Target);
+                    if (i >= 0)
+                    {
+                        _tileExtra[i] = new Vector3(edit.Value.x, edit.Value.y, 0f);
+                    }
+                    break;
+                }
+                case "TileScale":
+                {
+                    var i = ResolveTileIndex(edit.Target);
+                    if (i >= 0)
+                    {
+                        _tileScale[i] = edit.Value.x;
+                        _tileScaleY[i] = edit.Value.y;
+                    }
+                    break;
+                }
+                case "TileRot":
+                {
+                    var i = ResolveTileIndex(edit.Target);
+                    if (i >= 0)
+                    {
+                        _tileRot[i] = edit.Value.x;
+                    }
+                    break;
+                }
+                case "TileOpacity":
+                {
+                    var i = ResolveTileIndex(edit.Target);
+                    if (i >= 0)
+                    {
+                        _tileOpacity[i] = Mathf.Clamp01(edit.Value.x);
+                        var floor = _tileFloors[i];
+                        if (floor != null)
+                        {
+                            floor.opacity = _tileOpacity[i];
+                        }
+                    }
+                    break;
+                }
+                case "TileColor":
+                {
+                    var i = ResolveTileIndex(edit.Target);
+                    if (i >= 0 && i < _tileColors.Count)
+                    {
+                        _tileColors[i] = edit.ColorValue;
+                    }
+                    break;
+                }
+                case "DecoExtra":
+                {
+                    var deco = ResolveDeco(edit.Target);
+                    if (deco != null)
+                    {
+                        deco.extra = new Vector3(edit.Value.x, edit.Value.y, 0f);
+                    }
+                    break;
+                }
+                case "DecoScale":
+                {
+                    var deco = ResolveDeco(edit.Target);
+                    if (deco != null)
+                    {
+                        deco.baseScale = Mathf.Max(0.01f, edit.Value.x);
+                    }
+                    break;
+                }
+                case "DecoRot":
+                {
+                    var deco = ResolveDeco(edit.Target);
+                    if (deco != null)
+                    {
+                        if (deco.go != null)
+                        {
+                            deco.go.transform.rotation = Quaternion.Euler(0f, 0f, edit.Value.x);
+                        }
+                    }
+                    break;
+                }
+                case "DecoDepth":
+                {
+                    var deco = ResolveDeco(edit.Target);
+                    if (deco != null && deco.sr != null)
+                    {
+                        deco.sr.sortingOrder = edit.IntValue;
+                    }
+                    break;
+                }
+                default:
+                    Main.Handler?.Warning($"Ponder: unknown edit kind '{edit.Kind}'");
+                    return;
+            }
+            ApplyTransforms();
+        }
+
+        /// <summary>把 Ponder 沙盒的所有运行时状态重置回基准态 (Build 后的状态)，丢弃所有 edits。</summary>
+        public void ResetEdits()
+        {
+            ResetTransforms();
+        }
+
+        /// <summary>按选择器在 Ponder 沙盒内找第一个匹配的砖块索引；找不到返回 -1。</summary>
+        private int ResolveTileIndex(PonderSelector sel)
+        {
+            if (sel == null || !sel.HasCriteria)
+            {
+                return -1;
+            }
+            // 显式指定 tile 序号时直接索引 (1-based → 0-based)
+            if (sel.Tile > 0)
+            {
+                var idx = sel.Tile - 1;
+                if (idx >= 0 && idx < _tileFloors.Count && MatchesTile(sel, idx))
+                {
+                    return idx;
+                }
+                return -1;
+            }
+            for (var i = 0; i < _tileFloors.Count; i++)
+            {
+                if (MatchesTile(sel, i))
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        /// <summary>按选择器在 Ponder 沙盒内找第一个匹配的装饰物；找不到返回 null。</summary>
+        private DecoObj? ResolveDeco(PonderSelector sel)
+        {
+            if (sel == null || !sel.HasCriteria)
+            {
+                return null;
+            }
+            for (var i = 0; i < _decos.Count; i++)
+            {
+                var d = _decos[i];
+                if (sel.DecoTag.Length > 0 && d.tag != sel.DecoTag)
+                {
+                    continue;
+                }
+                if (sel.Tag.Length > 0 && d.tag != sel.Tag)
+                {
+                    continue;
+                }
+                if (sel.Floor && d.tile < 0)
+                {
+                    continue;
+                }
+                return d;
+            }
+            return null;
+        }
+
+        private bool MatchesTile(PonderSelector sel, int i)
+        {
+            if (sel.Floor)
+            {
+                if (i < 0 || i >= _tileFloors.Count || _tileFloors[i] == null)
+                {
+                    return false;
+                }
+            }
+            if (sel.Name.Length > 0)
+            {
+                var go = i < _tileObjects.Count ? _tileObjects[i] : null;
+                if (go == null || go.name != sel.Name)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         // ================= 指点元素（线 + 文字） =================
 
         private sealed class NoteObj
@@ -139,6 +331,15 @@ namespace Ponder
             public Vector3 textOffset;
             public Vector3 startOffset;
             public Vector3 endOffset;
+            // 模式 2 (世界自由定位)：用 worldAnchor/worldTarget 而非砖块基准 + 偏移。
+            public bool freePositioned;
+            public Vector2 worldAnchor;     // 文字框目标锚点 (世界单位)
+            public Vector2 worldTarget;     // 线目标点 (世界单位)
+            public Vector2 pivot = new Vector2(0.5f, 0.5f); // RectTransform pivot (0..1)
+            /// <summary>为避免 note 文字框相互覆盖, 每帧由碰撞松弛推开的实际偏移 (世界单位). 0 = 未推开.</summary>
+            public Vector2 shifted;
+            /// <summary>本帧碰撞松弛算出的目标偏移, 每帧用 lerp 缓动到 shifted 以避免抖动.</summary>
+            public Vector2 targetShifted;
         }
         private readonly List<NoteObj> _noteObjs = new List<NoteObj>();
 
@@ -191,8 +392,15 @@ namespace Ponder
             }
             ColorUtility.TryParseHtmlString(note.Color, out var col);
 
-            // 偏移是砖块单位，先乘 tileSize，再按砖块朝向转进本地系：
-            // x 沿轨道方向、y 垂直轨道（世界系下转弯处偏移会叠到后续砖块上）。
+            // 模式判断：WorldPos.x ≥ 0 表示设计师给了绝对世界坐标 + RectTransform pivot，
+            // 进入模式 2 (世界自由定位)；否则走模式 1 (砖块相对)。
+            var freePositioned = note.WorldPos.x >= 0f;
+            var pivot = note.Pivot;
+            // 缺省 pivot 中心化 (0.5, 0.5)，其他值让 worldPos 对应文字框的某角/边。
+            if (pivot.x < 0f || pivot.x > 1f) pivot.x = 0.5f;
+            if (pivot.y < 0f || pivot.y > 1f) pivot.y = 0.5f;
+
+            // 模式 1 的偏移：砖块单位 × tileSize，按砖块朝向转进本地系。
             var textOffset = RotateNoteOffset(new Vector3(note.TextX, note.TextY, 0f) * tileSize, note.Tile);
             var targetOffset = RotateNoteOffset(new Vector3(note.TargetX, note.TargetY, 0f) * tileSize, note.Tile);
             var startOffset = float.IsNaN(note.LineStartX)
@@ -210,10 +418,6 @@ namespace Ponder
             line.raycastTarget = false;
             line.color = col;
             line.thickness = 0.06f * tileSize;
-            line.headLength = 0.16f * tileSize;
-            line.headHalf = 0.16f * tileSize;
-            line.drawCircle = true;
-            line.circleRadius = 0.13f * tileSize;
 
             var obj = new NoteObj
             {
@@ -221,7 +425,11 @@ namespace Ponder
                 tile = note.Tile,
                 textOffset = textOffset,
                 startOffset = startOffset,
-                endOffset = endOffset
+                endOffset = endOffset,
+                freePositioned = freePositioned,
+                worldAnchor = freePositioned ? note.WorldPos : Vector2.zero,
+                worldTarget = freePositioned && note.WorldTarget.x > -999f ? note.WorldTarget : Vector2.zero,
+                pivot = pivot
             };
             _notes.Add(go);
 
@@ -261,6 +469,9 @@ namespace Ponder
                 box.raycastTarget = false;
                 obj.boxTf = (RectTransform)boxGo.transform;
                 obj.boxTf.sizeDelta = obj.boxSize;
+                // 模式 2：box pivot 用 note.Pivot (默认 0.5, 0.5)，让 worldPos 对应框的指定角。
+                // 模式 1：保持中心 pivot，UpdateNote 用 boxAnchor 居中放置。
+                obj.boxTf.pivot = pivot;
                 boxGo.transform.SetAsFirstSibling();
                 _notes.Add(boxGo);
             }
@@ -269,7 +480,7 @@ namespace Ponder
             UpdateNote(obj, tileSize);
         }
 
-        /// <summary>逐帧刷新指点元素：锚点跟随砖块当前位置，线/文字自动重算位置与方向。</summary>
+        /// <summary>逐帧刷新指点元素：先做文字框碰撞排斥，再让线/文字/底框按推开后的位置对齐。</summary>
         private void UpdateNotes()
         {
             if (_noteObjs.Count == 0)
@@ -277,9 +488,127 @@ namespace Ponder
                 return;
             }
             var tileSize = GetTileSize();
+            ResolveBoxCollisions(tileSize);
             foreach (var n in _noteObjs)
             {
                 UpdateNote(n, tileSize);
+            }
+        }
+
+        /// <summary>
+        /// Note 文字框之间的 AABB 碰撞排斥（Ponder-MC 风格：固定到屏幕的标签不需要，但
+        /// 我们的 note 是场景内指点，挨着砖块，挤在一起就会重叠）。
+        /// 思路：先算每条 note 的目标锚点 (模式 1 = 砖块基准 + startOffset；模式 2 = worldAnchor)，
+        /// 再迭代松弛把所有重叠的框沿"重叠最小轴"互相推开；为避免飞出场景，限制单轴最大推出量；
+        /// 为避免抖动，shifted 沿用上帧值并用 lerp 缓动到本帧目标。
+        /// </summary>
+        private void ResolveBoxCollisions(float tileSize)
+        {
+            var n = _noteObjs.Count;
+            if (n < 2)
+            {
+                if (n == 1)
+                {
+                    _noteObjs[0].targetShifted = Vector2.zero;
+                    _noteObjs[0].shifted = Vector2.Lerp(_noteObjs[0].shifted, Vector2.zero, 0.35f);
+                }
+                return;
+            }
+
+            var anchors = new Vector2[n];
+            var sizes = new Vector2[n];
+            var has = new bool[n];
+            for (var i = 0; i < n; i++)
+            {
+                var obj = _noteObjs[i];
+                if (obj.boxSize.x <= 0.0001f || obj.boxSize.y <= 0.0001f)
+                {
+                    has[i] = false;
+                    continue;
+                }
+                has[i] = true;
+                // 模式 1：锚点跟随砖块基准 + startOffset，砖块移动时也跟着走。
+                // 模式 2：锚点直接用 worldAnchor，再把 pivot 偏移折回 box 中心用于碰撞 AABB。
+                Vector2 a;
+                if (obj.freePositioned)
+                {
+                    a = obj.worldAnchor;
+                }
+                else
+                {
+                    var p = FixedTilePos(obj.tile) + obj.startOffset;
+                    a = new Vector2(p.x, p.y);
+                }
+                var pivotOffset = (new Vector2(0.5f, 0.5f) - obj.pivot) * obj.boxSize;
+                anchors[i] = a + pivotOffset;
+                sizes[i] = obj.boxSize;
+            }
+
+            var target = new Vector2[n];
+            // 4 次迭代松弛足以分离大多数挤压；过多次数在大场景下反而抖动
+            const int Iterations = 4;
+            // 框间保留一点空气，不让两个文字框"贴"在一起
+            var pad = 0.05f * tileSize;
+            // 单轴最大推出量：超过这个距离后，文字会离砖块太远（设计师写的 textX 通常 1.4~1.7），
+            // 所以宁可保留部分重叠也不要飞出场景。
+            var maxShift = 0.9f * tileSize;
+
+            for (var it = 0; it < Iterations; it++)
+            {
+                for (var i = 0; i < n; i++)
+                {
+                    if (!has[i])
+                    {
+                        continue;
+                    }
+                    var posI = anchors[i] + target[i];
+                    var halfI = sizes[i] * 0.5f;
+                    for (var j = i + 1; j < n; j++)
+                    {
+                        if (!has[j])
+                        {
+                            continue;
+                        }
+                        var posJ = anchors[j] + target[j];
+                        var halfJ = sizes[j] * 0.5f;
+                        var d = posJ - posI;
+                        var overlapX = (halfI.x + halfJ.x) - Mathf.Abs(d.x);
+                        var overlapY = (halfI.y + halfJ.y) - Mathf.Abs(d.y);
+                        if (overlapX > 0f && overlapY > 0f)
+                        {
+                            // 沿较小重叠轴方向推开：分离得最快、推开量最小
+                            if (overlapX < overlapY)
+                            {
+                                var dirX = d.x >= 0f ? 1f : -1f;
+                                var push = overlapX * 0.5f + pad * 0.5f;
+                                target[i].x -= dirX * push;
+                                target[j].x += dirX * push;
+                            }
+                            else
+                            {
+                                var dirY = d.y >= 0f ? 1f : -1f;
+                                var push = overlapY * 0.5f + pad * 0.5f;
+                                target[i].y -= dirY * push;
+                                target[j].y += dirY * push;
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (var i = 0; i < n; i++)
+            {
+                if (!has[i])
+                {
+                    continue;
+                }
+                var t = target[i];
+                if (t.x > maxShift) t.x = maxShift; else if (t.x < -maxShift) t.x = -maxShift;
+                if (t.y > maxShift) t.y = maxShift; else if (t.y < -maxShift) t.y = -maxShift;
+                var obj = _noteObjs[i];
+                obj.targetShifted = t;
+                // 阻尼：避免 box 突然跳一大段；lerp 因子越大越快收敛，越小越平滑
+                obj.shifted = Vector2.Lerp(obj.shifted, t, 0.35f);
             }
         }
 
@@ -289,14 +618,37 @@ namespace Ponder
             {
                 return;
             }
-            // 文字/底框锚在砖块的基准位置：轨道位移/缩放时不跟着动，文字原地保持；
-            // 线的箭头端跟随砖块当前位置，线体随两者距离自动拉长。
-            var fixedStart = FixedTilePos(n.tile) + n.startOffset;
-            var movingEnd = CurrentTilePos(n.tile) + n.endOffset;
+            // 模式 1 (砖块相对)：文字锚在砖块基准位置 + startOffset + 碰撞推开 shifted；
+            // 线终点跟随砖块当前位置 (PositionTrack 等动画会移动砖块，线跟着拉长/转向)。
+            // 模式 2 (世界自由)：文字和线终点都是绝对世界坐标，砖块移动不影响。
+            Vector3 boxAnchor;
+            Vector3 movingEnd;
+            if (n.freePositioned)
+            {
+                boxAnchor = new Vector3(
+                    n.worldAnchor.x + n.shifted.x,
+                    n.worldAnchor.y + n.shifted.y,
+                    0f);
+                movingEnd = new Vector3(n.worldTarget.x, n.worldTarget.y, 0f);
+            }
+            else
+            {
+                var fixedStart = FixedTilePos(n.tile) + n.startOffset;
+                boxAnchor = new Vector3(
+                    fixedStart.x + n.shifted.x,
+                    fixedStart.y + n.shifted.y,
+                    fixedStart.z);
+                movingEnd = CurrentTilePos(n.tile) + n.endOffset;
+            }
 
             // 线从底框边缘引出：朝目标方向的框边界点作为线起点，避免线从文字中间穿过。
-            var lineStart = fixedStart;
-            var delta = movingEnd - fixedStart;
+            // 用 box 中心而不是 boxAnchor(pivot 点) 算边界，再偏移回 boxAnchor。
+            var boxCenter = boxAnchor + new Vector3(
+                (0.5f - n.pivot.x) * n.boxSize.x,
+                (0.5f - n.pivot.y) * n.boxSize.y,
+                0f);
+            var lineStart = boxCenter;
+            var delta = movingEnd - boxCenter;
             var len = delta.magnitude;
             if (n.boxTf != null && n.boxSize.x > 0.0001f && len > 0.0001f)
             {
@@ -317,14 +669,15 @@ namespace Ponder
             n.graphic.SetVerticesDirty();
             if (n.boxTf != null)
             {
-                n.boxTf.position = fixedStart;
+                // box pivot 已经按 note.Pivot 设好，直接把 pivot 点放到 boxAnchor。
+                n.boxTf.position = boxAnchor;
                 n.boxTf.localScale = Vector3.one;
             }
             if (n.textTf != null)
             {
-                // 文字居中于底框（锚在框中心），z 略靠前避免被砖块遮挡；
+                // 文字居中于底框 (RectTransform 居中)，z 略靠前避免被砖块遮挡；
                 // 缩放只跟回溯系数，不受轨道 scale/全局缩放影响。
-                n.textTf.position = new Vector3(fixedStart.x, fixedStart.y, fixedStart.z - 0.2f);
+                n.textTf.position = new Vector3(boxCenter.x, boxCenter.y, boxAnchor.z - 0.2f);
                 n.textTf.localScale = Vector3.one;
             }
         }

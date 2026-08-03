@@ -1,0 +1,107 @@
+{
+  "id": "recolor-track",
+  "title": {
+    "zh_cn": "重染轨道",
+    "en_us": "RecolorTrack"
+  },
+  "description": {
+    "zh_cn": "在一段时间内把一段轨道的颜色改到目标颜色，永久保持",
+    "en_us": "Smoothly transition a section of the track's color to a target color, kept permanently"
+  },
+  "zoom": 3.4,
+  "spawnStagger": 0.18,
+  "tiles": [
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 90, "style": 1 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 }
+  ],
+  "decos": [],
+  "chapters": [
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 1 章 · 概览</b>\n{RecolorTrack} 在一段 {duration} 内把范围内 {tile} 的颜色平滑过渡到 {trackColor}，结束后 <b>永久保持</b> 该颜色。\n要恢复原色：再发一个 {RecolorTrack}，把 {trackColor} 设为原颜色。",
+        "en_us": "<b>Chapter 1 · Overview</b>\n{RecolorTrack} smoothly transitions the {tile}s in {range} to {trackColor} over {duration}, then keeps the color <b>permanently</b>.\nTo restore: send another {RecolorTrack} with {trackColor} set back to the original."
+      },
+      "notes": [],
+      "logic": [
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FF6B6B", "duration": 0.9, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 2 章 · 范围与 {trackColor}</b>\n{startTile} / {endTile} 决定染色范围，{trackColor} 决定目标颜色（HEX）。\n{range} 之外完全不动。",
+        "en_us": "<b>Chapter 2 · Range & {trackColor}</b>\n{startTile} / {endTile} define the {range}; {trackColor} is the target (HEX).\nAnything outside the {range} stays untouched."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{startTile}=2", "en_us": "{startTile}=2" }, "tile": 2, "textX": -1.4, "textY": 0.85, "targetX": -0.3, "targetY": 0.3, "color": "#FFD24A" },
+        { "text": { "zh_cn": "{endTile}=5", "en_us": "{endTile}=5" }, "tile": 5, "textX": 1.5, "textY": 0.85, "targetX": 0.4, "targetY": 0.3, "color": "#FFD24A" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 2, "endTile": 5, "trackColor": "#4FC3F7", "duration": 0.9, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 3 章 · {gapLength} 跳格</b>\n{RecolorTrack} 同样支持 {gapLength}：\n· {gapLength}=0：范围内每块都染色\n· {gapLength}=1：只染第 0、2、4、6 块\n· {gapLength}=2：只染第 0、3、6 块",
+        "en_us": "<b>Chapter 3 · {gapLength}</b>\n{RecolorTrack} also supports {gapLength}:\n· {gapLength}=0: every {tile} in {range}\n· {gapLength}=1: tiles 0, 2, 4, 6\n· {gapLength}=2: tiles 0, 3, 6"
+      },
+      "notes": [
+        { "text": { "zh_cn": "{gapLength}=1", "en_us": "{gapLength}=1" }, "tile": 4, "textX": 0, "textY": 1.05, "targetX": 0, "targetY": 0.3, "color": "#B39DDB" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FFFFFF", "duration": 0.4, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FF6B6B", "gapLength": 1, "duration": 0.9, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.6 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 4 章 · {trackColorPulse} 脉冲</b>\n{trackColorPulse}=None：颜色原地替换（默认）。\n{trackColorPulse}=Forward：颜色沿轨道<b>正方向流动</b>。\n{trackColorPulse}=Backward：颜色沿轨道<b>反方向流动</b>。\n{trackPulseLength} 决定流动距离（块数）。",
+        "en_us": "<b>Chapter 4 · {trackColorPulse}</b>\n{trackColorPulse}=None: instant replace (default).\n{trackColorPulse}=Forward: color <b>flows forward</b> along the track.\n{trackColorPulse}=Backward: color <b>flows backward</b> along the track.\n{trackPulseLength} sets the flow distance (in {tile}s)."
+      },
+      "notes": [
+        { "text": { "zh_cn": "Forward", "en_us": "Forward" }, "tile": 0, "textX": 0, "textY": 1.05, "targetX": 0, "targetY": 0.3, "color": "#90CAF9" },
+        { "text": { "zh_cn": "Backward", "en_us": "Backward" }, "tile": 0, "textX": 0, "textY": 1.05, "targetX": 0, "targetY": 0.3, "color": "#A5D6A7" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FFFFFF", "duration": 0.4, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.3 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#90CAF9", "trackColorPulse": "Forward", "trackPulseLength": 6, "duration": 1.4, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#A5D6A7", "trackColorPulse": "Backward", "trackPulseLength": 6, "duration": 1.4, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.0 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 5 章 · {trackStyle} 线条风格与 {trackGlowIntensity} 发光</b>\n{trackStyle} 决定线条样式：Standard / Glow / Neon 等。\n{trackGlowIntensity} 控制发光强度，0~100。",
+        "en_us": "<b>Chapter 5 · {trackStyle} & {trackGlowIntensity}</b>\n{trackStyle} selects the line style: Standard / Glow / Neon, etc.\n{trackGlowIntensity} controls the glow, 0~100."
+      },
+      "notes": [
+        { "text": { "zh_cn": "Standard", "en_us": "Standard" }, "tile": 1, "textX": 0, "textY": 1.0, "targetX": 0, "targetY": 0.3, "color": "#FFFFFF" },
+        { "text": { "zh_cn": "Glow", "en_us": "Glow" }, "tile": 4, "textX": 0, "textY": 1.0, "targetX": 0, "targetY": 0.3, "color": "#FFD24A" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FFFFFF", "duration": 0.4, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.3 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 3, "trackColor": "#FFFFFF", "trackStyle": "Standard", "trackGlowIntensity": 0, "duration": 0.8, "ease": "InOutQuad" },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 4, "endTile": 7, "trackColor": "#FFD24A", "trackStyle": "Glow", "trackGlowIntensity": 100, "duration": 0.8, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.0 }
+      ]
+    }
+  ]
+}

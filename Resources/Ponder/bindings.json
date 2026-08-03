@@ -6,6 +6,34 @@
         "type": "event",
         "event": "MoveTrack"
       }
+    },
+    {
+      "scene": "recolor-track",
+      "selector": {
+        "type": "event",
+        "event": "RecolorTrack"
+      }
+    },
+    {
+      "scene": "set-track-color",
+      "selector": {
+        "type": "event",
+        "event": "SetTrackColor"
+      }
+    },
+    {
+      "scene": "position-track",
+      "selector": {
+        "type": "event",
+        "event": "PositionTrack"
+      }
+    },
+    {
+      "scene": "add-decoration",
+      "selector": {
+        "type": "event",
+        "event": "AddDecoration"
+      }
     }
   ]
 }

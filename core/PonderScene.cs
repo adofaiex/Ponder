@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Ponder
 {
@@ -17,6 +18,8 @@ namespace Ponder
         public string Setting = "";     // 设置类事件类型
         public string Image = "";       // 装饰物图片
         public bool Floor;              // 是否砖块
+        public int Tile;                // 砖块序号 (1-based)；0=不按序号匹配
+        public string DecoTag = "";     // 装饰物 tag (Ponder 沙盒内 Decos 的 tag)
 
         /// <summary>是否声明了任何匹配条件（空选择器永不匹配）。</summary>
         public bool HasCriteria =>
@@ -28,7 +31,9 @@ namespace Ponder
             !string.IsNullOrEmpty(Event) ||
             !string.IsNullOrEmpty(Setting) ||
             !string.IsNullOrEmpty(Image) ||
-            Floor;
+            !string.IsNullOrEmpty(DecoTag) ||
+            Floor ||
+            Tile != 0;
 
         /// <summary>身份完全相等（用于悬停变化检测，比较全部身份字段）。</summary>
         public bool IdentityEquals(PonderSelector other)
@@ -45,7 +50,9 @@ namespace Ponder
                 Event == other.Event &&
                 Setting == other.Setting &&
                 Image == other.Image &&
-                Floor == other.Floor;
+                DecoTag == other.DecoTag &&
+                Floor == other.Floor &&
+                Tile == other.Tile;
         }
 
         public string Describe()
@@ -59,7 +66,9 @@ namespace Ponder
             if (Event.Length > 0) parts.Add($"event:{Event}");
             if (Setting.Length > 0) parts.Add($"setting:{Setting}");
             if (Image.Length > 0) parts.Add($"image:{Image}");
+            if (DecoTag.Length > 0) parts.Add($"decoTag:{DecoTag}");
             if (Floor) parts.Add("floor");
+            if (Tile != 0) parts.Add($"tile:{Tile}");
             return parts.Count > 0 ? string.Join(" ", parts) : "(any)";
         }
     }
@@ -117,12 +126,16 @@ namespace Ponder
 
     /// <summary>
     /// 指点元素：一条线 + 一段文字。线的一端（起点）连文字，另一端（终点/箭头）指向目标。
-    /// 所有坐标都是相对锚定砖块的偏移，单位 = 砖块（乘 tileSize 得到世界单位），位置可调。
+    /// 两种定位模式：
+    ///   1) 砖块相对：所有坐标是相对锚定砖块 Tile 的偏移（砖块单位），砖块移动时线/文字跟着走。
+    ///   2) 世界自由：WorldPos (x≠-1) 直接给出文字的世界坐标 + Pivot (RectTransform 0..1 pivot)，
+    ///      WorldTarget (x≠-1000) 给出线终点的世界坐标；线和文字固定在 Ponder 场景内，不随砖块移动。
+    /// 模式 1 是缺省（兼容旧 JSON）；模式 2 通过 worldPos/worldTarget 启用，文字可以摆在屏幕任意位置。
     /// </summary>
     public sealed class PonderNote
     {
         public string Text = "";         // 线头文字
-        public int Tile;                 // 锚定砖块
+        public int Tile;                 // 锚定砖块 (模式 1)
         public float TargetX;            // 线终点（箭头）相对锚点偏移 X
         public float TargetY;            // 线终点（箭头）相对锚点偏移 Y
         public float TextX;              // 文字位置偏移 X
@@ -133,6 +146,12 @@ namespace Ponder
         public float LineEndY = float.NaN;
         public string Color = "#FFFFFF";
         public bool ShowText = true;     // 是否显示线头文字
+
+        // 模式 2：世界自由定位。WorldPos.x < 0 视为未启用，强制走模式 1。
+        public Vector2 WorldPos = new Vector2(-1f, -1f);
+        public Vector2 WorldTarget = new Vector2(-1000f, -1000f);
+        // RectTransform pivot (0..1, 0.5=center)：决定 worldPos 对应文字框的哪个角。
+        public Vector2 Pivot = new Vector2(0.5f, 0.5f);
     }
 
     public sealed class PonderSceneTile
@@ -186,5 +205,22 @@ namespace Ponder
             }
             return Chapters[index];
         }
+    }
+
+    /// <summary>
+    /// 一次 Ponder 沙盒编辑（MC Ponder 风格"万物皆可 Ponder"）。
+    /// 设计师既可以写在 JSON 里做声明式编辑，也可以由用户在 Ponder 沙盒内拖动时自动记录。
+    /// 进入 Ponder 时先 Snapshot，章节推进 / 关闭时按 record 顺序 apply。
+    /// </summary>
+    public sealed class PonderEdit
+    {
+        public string Kind = "";          // TileExtra | TileScale | TileRot | TileOpacity | TileColor |
+                                          // DecoExtra | DecoScale | DecoRot | DecoDepth
+        public PonderSelector Target = new PonderSelector();
+        public Vector2 Value;             // 平移 / 缩放 / 旋转
+        public Color ColorValue;          // 颜色 (Kind=TileColor 时用)
+        public int IntValue;              // 深度等整数 (Kind=DecoDepth 时用)
+        public int Chapter = -1;          // 哪个章节产生此编辑（-1=全程 / 开场）
+        public float At = -1f;            // 章节内时间 (秒)，-1=立刻 apply
     }
 }

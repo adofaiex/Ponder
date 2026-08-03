@@ -1,0 +1,113 @@
+{
+  "id": "position-track",
+  "title": {
+    "zh_cn": "轨道定位",
+    "en_us": "PositionTrack"
+  },
+  "description": {
+    "zh_cn": "一次性设置一段轨道的位移/缩放/旋转/不透明度，永久保持",
+    "en_us": "Set position/scale/rotation/opacity of a track section in one shot, kept permanently"
+  },
+  "zoom": 3.4,
+  "spawnStagger": 0.18,
+  "tiles": [
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 },
+    { "angle": 90, "style": 1 },
+    { "angle": 0, "style": 0 },
+    { "angle": 0, "style": 0 }
+  ],
+  "decos": [],
+  "chapters": [
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 1 章 · 概览</b>\n{PositionTrack} 把范围内每块 {tile} 的位置/缩放/旋转/不透明度<b>同时</b>设到目标值。\n字段（{positionOffset} / {scale} / {rotation} / {opacity}）是<b>可选的</b>，只写哪些就改哪些。\n行为与 {MoveTrack} 类似：永久保持；要恢复需再发一个 {PositionTrack} 把值设回去。",
+        "en_us": "<b>Chapter 1 · Overview</b>\n{PositionTrack} sets each {tile}'s position/scale/rotation/opacity to the target value <b>in one shot</b>.\nFields ({positionOffset} / {scale} / {rotation} / {opacity}) are <b>optional</b> — only the ones you set are changed.\nBehavior matches {MoveTrack}: permanent, requires another {PositionTrack} to restore."
+      },
+      "notes": [],
+      "logic": [
+        { "cmd": "Wait", "floor": 0, "duration": 0.5 },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 1, "endTile": 4, "positionOffset": [0, 0.5], "scale": 70, "rotation": 15, "opacity": 70, "duration": 0.9, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 1.4 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 2 章 · {positionOffset} 位置</b>\n只写 {positionOffset} 字段：只动位置，其他不变。\nx 沿轨道，y 垂直轨道。\n恢复：再发一个 {PositionTrack}，{positionOffset}=[0,0]。",
+        "en_us": "<b>Chapter 2 · {positionOffset}</b>\nSetting only {positionOffset} moves position only, nothing else changes.\nx along the track, y perpendicular.\nRestore: send another {PositionTrack} with {positionOffset}=[0,0]."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{positionOffset}=[0, 0.5]", "en_us": "{positionOffset}=[0, 0.5]" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#4FC3F7" }
+      ],
+      "logic": [
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0, 0.5], "duration": 0.8, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0, 0], "duration": 0.8, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.5 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 3 章 · {scale} 缩放</b>\n只写 {scale} 字段：只改缩放，位置/旋转/不透明度不动。\n{scale} 是<b>绝对目标值</b>，0~100。",
+        "en_us": "<b>Chapter 3 · {scale}</b>\nSetting only {scale} changes size only, position/rotation/opacity untouched.\n{scale} is an <b>absolute target</b>, 0~100."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{scale}=50", "en_us": "{scale}=50" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#81C784" }
+      ],
+      "logic": [
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 0, "endTile": 7, "scale": 50, "duration": 0.9, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 0, "endTile": 7, "scale": 100, "duration": 0.9, "ease": "OutBack" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.5 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 4 章 · {rotation} + {opacity}</b>\n只写 {rotation}：只改角度。\n只写 {opacity}：只改不透明度（0~100）。",
+        "en_us": "<b>Chapter 4 · {rotation} + {opacity}</b>\n{rotation} only: rotate only.\n{opacity} only: change opacity only (0~100)."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{rotation}=30°", "en_us": "{rotation}=30°" }, "tile": 2, "textX": 1.4, "textY": 0.7, "targetX": 0.4, "targetY": 0.25, "color": "#CE93D8" },
+        { "text": { "zh_cn": "{opacity}=30", "en_us": "{opacity}=30" }, "tile": 6, "textX": -1.4, "textY": 0.7, "targetX": -0.4, "targetY": 0.25, "color": "#FF8A80" }
+      ],
+      "logic": [
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 0, "endTile": 3, "rotation": 30, "duration": 1.0, "ease": "OutBack" },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 4, "endTile": 7, "opacity": 30, "duration": 1.0, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 0, "endTile": 3, "rotation": 0, "duration": 0.9, "ease": "InOutQuad" },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 4, "endTile": 7, "opacity": 100, "duration": 0.9, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.5 }
+      ]
+    },
+    {
+      "floor": 0,
+      "text": {
+        "zh_cn": "<b>第 5 章 · {MoveTrack} vs {PositionTrack}</b>\n两者都改轨道外观，区别：\n· {MoveTrack}：总是同时改 {positionOffset} / {scale} / {rotation} / {opacity}，<b>没写的字段视为 0 或 100</b>（会重置）。\n· {PositionTrack}：<b>只改显式写的字段</b>，其他保持。\n想保留其他属性不变 → 用 {PositionTrack}。",
+        "en_us": "<b>Chapter 5 · {MoveTrack} vs {PositionTrack}</b>\nBoth change the track; the difference:\n· {MoveTrack}: always touches all 4 fields. Fields you omit are treated as 0 or 100 (i.e. they reset).\n· {PositionTrack}: <b>only touches the fields you write</b>; others stay as-is.\nUse {PositionTrack} to keep the other properties intact."
+      },
+      "notes": [
+        { "text": { "zh_cn": "{MoveTrack}\n会清空其他", "en_us": "{MoveTrack}\nresets others" }, "tile": 1, "textX": 1.4, "textY": 0.85, "targetX": 0.4, "targetY": 0.25, "color": "#FF8A80" },
+        { "text": { "zh_cn": "{PositionTrack}\n其他不变", "en_us": "{PositionTrack}\nothers kept" }, "tile": 5, "textX": -1.4, "textY": 0.85, "targetX": -0.4, "targetY": 0.25, "color": "#81C784" }
+      ],
+      "logic": [
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FFFFFF", "duration": 0.4, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.3 },
+        { "eventType": "RecolorTrack", "floor": 0, "startTile": 0, "endTile": 7, "trackColor": "#FFD24A", "duration": 0.4, "ease": "InOutQuad" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 0, "endTile": 3, "positionOffset": [0, 0.4], "duration": 0.7, "ease": "OutCubic" },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 4, "endTile": 7, "positionOffset": [0, 0.4], "duration": 0.7, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.4 },
+        { "eventType": "MoveTrack", "floor": 0, "startTile": 0, "endTile": 3, "scale": 60, "duration": 0.7, "ease": "OutCubic" },
+        { "eventType": "PositionTrack", "floor": 0, "startTile": 4, "endTile": 7, "scale": 60, "duration": 0.7, "ease": "OutCubic" },
+        { "cmd": "Wait", "floor": 0, "duration": 0.6 }
+      ]
+    }
+  ]
+}
