@@ -1,7 +1,6 @@
 # ADOFAI 多加载器 Mod 模板
 
-一个用于创建《A Dance of Fire and Ice》（ADOFAI）Mod 的项目模板，支持多种加载器：
-Unity Mod Manager、MelonLoader、BepInEx 和 Doorstop 独立模式。
+一个参考 [Create Ponder](https://github.com/Creators-of-Create/Ponder) 架构、为《A Dance of Fire and Ice》（ADOFAI）提供交互式思索教程的引擎，支持 Unity Mod Manager、MelonLoader 和 BepInEx。
 
 ## 项目结构
 
@@ -18,7 +17,6 @@ ProjectRoot/
 │   ├── umm/                                -- Unity Mod Manager 适配
 │   ├── melon/                              -- MelonLoader 适配
 │   ├── bepinex/                            -- BepInEx 适配
-│   └── doorstop/                           -- Doorstop 独立模式适配
 ├── scripts/
 │   ├── pack.csx                            -- 分发 zip 打包脚本
 │   ├── pack.cmd                            -- Windows 打包命令
@@ -62,11 +60,11 @@ dotnet new install path/to/Ponder
 ### 命令行
 
 ```bash
-# 全部四个加载器（默认）
+# 全部支持的加载器（默认）
 dotnet new adofaiml -n MyMod -g "C:\Games\ADOFAI\A Dance of Fire and Ice.exe"
 
 # 选择部分加载器（关闭不需要的）
-dotnet new adofaiml -n MyMod --bepinex false --doorstop false -g "C:\Games\ADOFAI\A Dance of Fire and Ice.exe"
+dotnet new adofaiml -n MyMod --bepinex false -g "C:\Games\ADOFAI\A Dance of Fire and Ice.exe"
 
 # 指定作者和描述
 dotnet new adofaiml -n MyMod -a "YourName" -d "我的第一个 ADOFAI Mod" -g "path/to/game.exe"
@@ -89,7 +87,6 @@ dotnet new adofaiml -n MyMod -a "YourName" -d "我的第一个 ADOFAI Mod" -g "p
 | `-um` | `--umm` | 包含 UMM 加载器（默认：true） |
 | `-ml` | `--melon` | 包含 MelonLoader（默认：true） |
 | `-bx` | `--bepinex` | 包含 BepInEx（默认：true） |
-| `-ds` | `--doorstop` | 包含 Doorstop（默认：true） |
 
 ## 构建与部署
 
@@ -100,7 +97,6 @@ dotnet new adofaiml -n MyMod -a "YourName" -d "我的第一个 ADOFAI Mod" -g "p
 dotnet build -p:Loader=UMM
 dotnet build -p:Loader=ML
 dotnet build -p:Loader=BepInEx
-dotnet build -p:Loader=Doorstop
 
 # Release：仅构建，输出到 out/
 dotnet build -c Release
@@ -113,7 +109,6 @@ dotnet build -c Release
 | `UMM` | `游戏目录/Mods/{Mod名称}/` |
 | `ML` | `游戏目录/Mods/` |
 | `BepInEx` | `游戏目录/BepInEx/plugins/{Mod名称}/` |
-| `Doorstop` | `游戏目录/`（根目录，与 doorstop_config.ini 同级） |
 
 解决方案中的每个项目均可独立构建。无论构建哪个加载器，
 `out/` 目录都会以扁平结构收集所有输出文件：
@@ -124,9 +119,7 @@ out/
 ├── {Mod名称}.Loader.UMM.dll        （如果构建了 UMM）
 ├── {Mod名称}.Loader.Melon.dll      （如果构建了 Melon）
 ├── {Mod名称}.Loader.BepInEx.dll    （如果构建了 BepInEx）
-├── {Mod名称}.Loader.Doorstop.dll   （如果构建了 Doorstop）
 ├── Info.json                        （仅构建 UMM 时存在）
-├── doorstop_config.ini              （仅构建 Doorstop 时存在）
 └── Resources/
 ```
 
@@ -148,7 +141,6 @@ scripts/pack.ps1      # PowerShell
 | `{Mod名称}_umm.zip` | `Mods/{Mod名称}/` 扁平 |
 | `{Mod名称}_melon.zip` | `Mods/` 扁平 |
 | `{Mod名称}_bepinex.zip` | `BepInEx/plugins/{Mod名称}/` 扁平 |
-| `{Mod名称}_doorstop.zip` | 根目录扁平（含 doorstop_config.ini） |
 
 每个压缩包解压到游戏根目录即可直接使用。
 

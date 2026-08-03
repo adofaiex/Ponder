@@ -19,7 +19,7 @@ namespace Ponder.Loaders
 
         public string ModId => "Ponder";
         public string ModVersion => "0.6.0";
-        public string ModPath => Paths.PluginPath;
+        public string ModPath => Path.GetDirectoryName(typeof(BepInHandler).Assembly.Location) ?? Paths.PluginPath;
 
         public void Log(string message) => _log.LogInfo(message);
         public void Warning(string message) => _log.LogWarning(message);

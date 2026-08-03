@@ -1,0 +1,31 @@
+{
+  "ui": {
+    "backToList": "◀ Scene List",
+    "selectScene": "Select a Ponder Scene",
+    "chapter": "Chapter {index} / {count}",
+    "pageTitle": "PONDER · PONDER",
+    "closeHint": "Click anywhere or press Esc to close",
+    "placeholderDesc": "An immersive ponder scene for this config item will live here (placeholder)",
+    "holdHint": "Hold [Alt] to Ponder"
+  },
+  "term": {
+    "MoveTrack": "MoveTrack",
+    "RecolorTrack": "RecolorTrack",
+    "positionOffset": "position offset",
+    "rotationOffset": "rotation offset",
+    "scale": "scale",
+    "opacity": "opacity",
+    "ease": "ease",
+    "gapLength": "gap length",
+    "startTile": "start tile",
+    "endTile": "end tile",
+    "trackColor": "track color",
+    "duration": "duration",
+    "tile": "tile",
+    "range": "range",
+    "AddTiles": "Add Tiles",
+    "OutBack": "OutBack",
+    "OutBounce": "OutBounce",
+    "linear": "linear"
+  }
+}

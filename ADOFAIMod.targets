@@ -36,10 +36,6 @@
           DestinationFolder="$(ModOutDir)"
           Condition="$(AssemblyName.EndsWith('Loader.UMM')) AND Exists('$(ProjectDir)../../Info.json')"
           SkipUnchangedFiles="true" />
-    <Copy SourceFiles="$(ProjectDir)doorstop_config.ini"
-          DestinationFolder="$(ModOutDir)"
-          Condition="Exists('$(ProjectDir)doorstop_config.ini')"
-          SkipUnchangedFiles="true" />
 
     <!-- core project brings Resources -->
     <ItemGroup Condition="'$(IsCoreProject)' == 'true'">
@@ -52,22 +48,21 @@
     <Message Text="[$(AssemblyName)] → $(ModOutDir)" Importance="high" />
   </Target>
 
-  <!-- Deploy: -p:Loader=UMM|ML|BepInEx|Doorstop -->
+  <!-- Deploy: -p:Loader=UMM|ML|BepInEx -->
   <Target Name="ValidateLoader" BeforeTargets="DeployAndLaunch"
-          Condition="'$(Loader)' != '' AND '$(Loader)' != 'UMM' AND '$(Loader)' != 'ML'
-                     AND '$(Loader)' != 'BepInEx' AND '$(Loader)' != 'Doorstop'">
-    <Error Text="Invalid Loader '$(Loader)'. Valid: UMM, ML, BepInEx, Doorstop" />
+           Condition="'$(Loader)' != '' AND '$(Loader)' != 'UMM' AND '$(Loader)' != 'ML'
+                      AND '$(Loader)' != 'BepInEx'">
+    <Error Text="Invalid Loader '$(Loader)'. Valid: UMM, ML, BepInEx" />
   </Target>
 
   <Target Name="DeployAndLaunch" AfterTargets="CopyToOut"
           Condition="'$(Loader)' != '' AND '$(GameExePath)' != '' AND '$(GameExePath)' != '' AND Exists('$(GameExePath)')">
     <PropertyGroup>
       <GameDir>$([System.IO.Path]::GetDirectoryName($(GameExePath)))</GameDir>
-      <ModName>$(AssemblyName.Replace('.Core','').Replace('.Loader.UMM','').Replace('.Loader.Melon','').Replace('.Loader.BepInEx','').Replace('.Loader.Doorstop',''))</ModName>
+      <ModName>$(AssemblyName.Replace('.Core','').Replace('.Loader.UMM','').Replace('.Loader.Melon','').Replace('.Loader.BepInEx',''))</ModName>
       <DeployDir Condition="'$(Loader)' == 'UMM'">$(GameDir)/Mods/$(ModName)/</DeployDir>
       <DeployDir Condition="'$(Loader)' == 'ML'">$(GameDir)/Mods/</DeployDir>
       <DeployDir Condition="'$(Loader)' == 'BepInEx'">$(GameDir)/BepInEx/plugins/$(ModName)/</DeployDir>
-      <DeployDir Condition="'$(Loader)' == 'Doorstop'">$(GameDir)/</DeployDir>
       <IsWindows>true</IsWindows>
     </PropertyGroup>
 

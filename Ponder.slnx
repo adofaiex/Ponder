@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="core/Ponder.Core.csproj" />
+  <Project Path="loaders/bepinex/Ponder.Loader.BepInEx.csproj" />
+  <Project Path="loaders/melon/Ponder.Loader.Melon.csproj" />
+  <Project Path="loaders/umm/Ponder.Loader.UMM.csproj" />
+</Solution>

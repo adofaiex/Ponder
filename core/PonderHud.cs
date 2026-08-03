@@ -151,7 +151,7 @@ namespace Ponder
                 text.text =
                     $"<size=1.15em><color={Cyan}><b>{sub.Title}</b></color></size>\n" +
                     $"<color={White}>{sub.Description}</color>\n" +
-                    $"<color={Gray}>按住 </color><color={Cyan}>[Alt]</color><color={Gray}> 开始思索</color>";
+                    $"<color={Gray}>{PonderLang.Get("ui.holdHint", "按住 [Alt] 开始思索")}</color>";
             }
             dirty = true;
         }

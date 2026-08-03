@@ -2,26 +2,65 @@ using System.Collections.Generic;
 
 namespace Ponder
 {
-    /// <summary>触发选择器：说明要悬停/绑定的 GameObject。</summary>
+    /// <summary>
+    /// 通用 GameObject 身份选择器：声明要匹配对象身上的哪些身份属性（任意组合，全部命中即匹配）。
+    /// 身份属性：名称、tag、组件类型、层级、事件/设置类型、装饰物 tag/图片、是否是砖块。
+    /// </summary>
     public sealed class PonderSelector
     {
-        public string Type = "";    // event | setting | decoration | floor
-        public string Event = "";   // 事件名，如 MoveTrack
-        public string Setting = ""; // 设置类事件名，如 TrackSettings
-        public string Tag = "";     // 装饰物 tag
-        public string Image = "";   // 装饰物图片
-        public bool Floor;
+        public string Name = "";        // GameObject 名称（精确）
+        public string NameContains = ""; // GameObject 名称包含
+        public string Tag = "";         // GameObject tag 或装饰物逻辑 tag
+        public string Component = "";   // 组件类型名，如 scrFloor / scrDecoration
+        public string Layer = "";       // 层级名，如 Floor / Foreground
+        public string Event = "";       // 事件类型，如 MoveTrack
+        public string Setting = "";     // 设置类事件类型
+        public string Image = "";       // 装饰物图片
+        public bool Floor;              // 是否砖块
+
+        /// <summary>是否声明了任何匹配条件（空选择器永不匹配）。</summary>
+        public bool HasCriteria =>
+            !string.IsNullOrEmpty(Name) ||
+            !string.IsNullOrEmpty(NameContains) ||
+            !string.IsNullOrEmpty(Tag) ||
+            !string.IsNullOrEmpty(Component) ||
+            !string.IsNullOrEmpty(Layer) ||
+            !string.IsNullOrEmpty(Event) ||
+            !string.IsNullOrEmpty(Setting) ||
+            !string.IsNullOrEmpty(Image) ||
+            Floor;
+
+        /// <summary>身份完全相等（用于悬停变化检测，比较全部身份字段）。</summary>
+        public bool IdentityEquals(PonderSelector other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            return Name == other.Name &&
+                NameContains == other.NameContains &&
+                Tag == other.Tag &&
+                Component == other.Component &&
+                Layer == other.Layer &&
+                Event == other.Event &&
+                Setting == other.Setting &&
+                Image == other.Image &&
+                Floor == other.Floor;
+        }
 
         public string Describe()
         {
-            return Type switch
-            {
-                "event" => $"event:{Event}",
-                "setting" => $"setting:{Setting}",
-                "decoration" => $"decoration:{Tag}/{Image}",
-                "floor" => "floor",
-                _ => Type
-            };
+            var parts = new List<string>();
+            if (Name.Length > 0) parts.Add($"name:{Name}");
+            if (NameContains.Length > 0) parts.Add($"name~:{NameContains}");
+            if (Tag.Length > 0) parts.Add($"tag:{Tag}");
+            if (Component.Length > 0) parts.Add($"component:{Component}");
+            if (Layer.Length > 0) parts.Add($"layer:{Layer}");
+            if (Event.Length > 0) parts.Add($"event:{Event}");
+            if (Setting.Length > 0) parts.Add($"setting:{Setting}");
+            if (Image.Length > 0) parts.Add($"image:{Image}");
+            if (Floor) parts.Add("floor");
+            return parts.Count > 0 ? string.Join(" ", parts) : "(any)";
         }
     }
 
@@ -32,17 +71,29 @@ namespace Ponder
         public PonderSelector Selector = new PonderSelector();
     }
 
-    /// <summary>逻辑命令：操作砖块/装饰物，效果类似官方 MoveTrack/PositionTrack。</summary>
+    /// <summary>
+    /// 逻辑命令。支持两种写法：
+    /// 1. 原生 ADOFAI 事件：{ floor, eventType, ...extraProps } —— EventType/Floor/Props 填充；
+    /// 2. 沙盒命令：{ cmd, ... } —— Cmd 填充（AddTiles/Wait/...），用于增删轨道等结构性操作。
+    /// </summary>
     public sealed class PonderLogicCommand
     {
-        public string Cmd = "";     // MoveTrack|PositionTrack|ScaleTrack|AddDecoration|MoveDecorations|SetTrackColor|SetFloorColor|SetFloorStyle|Wait
+        public string EventType = "";              // 原生事件类型名（如 MoveTrack / PositionTrack / RecolorTrack）
+        public int Floor = -1;                     // 原生事件所在砖块
+        public Dictionary<string, object>? Props;  // 原生 extraProps（positionOffset / tag / trackColor ...）
+        public Dictionary<string, object>? RawEvent; // 原生事件完整 JSON，延迟到主线程交给官方 LevelEvent 解析
+
+        public string Cmd = "";                    // 沙盒命令：AddTiles | Wait | SetFloorStyle | ScaleTrack ...
+        public List<PonderSceneTile>? Tiles;       // AddTiles 用的新砖块
+
         public float Delay;         // 启动前等待（秒）
         public float Duration = 1f; // 持续时间（秒）
-        public string Ease = "linear"; // linear|easeIn|easeOut|easeInOut
+        public string Ease = "linear"; // linear|easeIn|easeOut|easeInOut|官方 ease 名
 
-        public float OffsetX;       // 平移量（砖块单位）
+        public float OffsetX;       // 兼容旧命令：平移量（砖块单位）
         public float OffsetY;
-        public int Tile;            // 起始砖
+        public int Tile;            // 兼容旧命令：起始砖
+        public bool HasTile;        // 是否显式写了 tile/startTile（AddTiles 用它定位插入起点，缺省=最后一块）
         public int EndTile = -1;    // 结束砖（-1=单块）
         public float Scale = 1f;    // 缩放倍率
         public string Color = "";   // 十六进制颜色
@@ -51,6 +102,9 @@ namespace Ponder
         public string Image = "";   // 装饰物图片
         public float Rotation;      // 装饰物旋转
         public bool Loop;           // 播完自动重播
+
+        /// <summary>命令名（原生事件名或沙盒命令名），用于调度。</summary>
+        public string Name => EventType.Length > 0 ? EventType : Cmd;
     }
 
     public sealed class PonderChapter
@@ -58,11 +112,32 @@ namespace Ponder
         public int Floor;
         public string Text;
         public List<PonderLogicCommand> Logic = new List<PonderLogicCommand>();
+        public List<PonderNote> Notes = new List<PonderNote>();
+    }
+
+    /// <summary>
+    /// 指点元素：一条线 + 一段文字。线的一端（起点）连文字，另一端（终点/箭头）指向目标。
+    /// 所有坐标都是相对锚定砖块的偏移，单位 = 砖块（乘 tileSize 得到世界单位），位置可调。
+    /// </summary>
+    public sealed class PonderNote
+    {
+        public string Text = "";         // 线头文字
+        public int Tile;                 // 锚定砖块
+        public float TargetX;            // 线终点（箭头）相对锚点偏移 X
+        public float TargetY;            // 线终点（箭头）相对锚点偏移 Y
+        public float TextX;              // 文字位置偏移 X
+        public float TextY;              // 文字位置偏移 Y
+        public float LineStartX = float.NaN;  // 线起点（连文字那端），缺省 = 文字位置
+        public float LineStartY = float.NaN;
+        public float LineEndX = float.NaN;    // 线终点（箭头那端），缺省 = 目标位置
+        public float LineEndY = float.NaN;
+        public string Color = "#FFFFFF";
+        public bool ShowText = true;     // 是否显示线头文字
     }
 
     public sealed class PonderSceneTile
     {
-        public float Angle = 180f;      // 度，ado 角度
+        public float Angle = 0f;        // 方向数据（angleData，度）：tile 的朝向，非相对转角
         public int Style;
         public bool Midspin;
     }
@@ -88,6 +163,7 @@ namespace Ponder
         public float Zoom = 4f;
         public float CenterX;
         public float CenterY;
+        public float SpawnStagger = 0.15f;  // 开场砖块逐块弹出的间隔（秒），0=全部立刻出现
         public List<PonderSceneTile> Tiles = new List<PonderSceneTile>();
         public List<PonderSceneDeco> Decos = new List<PonderSceneDeco>();
         public List<PonderLogicCommand> Logic = new List<PonderLogicCommand>();   // 开场播放

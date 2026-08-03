@@ -1,0 +1,11 @@
+{
+  "bindings": [
+    {
+      "scene": "move-track",
+      "selector": {
+        "type": "event",
+        "event": "MoveTrack"
+      }
+    }
+  ]
+}

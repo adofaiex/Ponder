@@ -1,0 +1,31 @@
+{
+  "ui": {
+    "backToList": "◀ 场景列表",
+    "selectScene": "选择演示场景",
+    "chapter": "第 {index} / {count} 章",
+    "pageTitle": "PONDER · 思索",
+    "closeHint": "点击任意处或按 Esc 关闭",
+    "placeholderDesc": "此处将承载关于此配置项的沉浸式思索场景（占位）",
+    "holdHint": "按住 [Alt] 开始思索"
+  },
+  "term": {
+    "MoveTrack": "移动轨道",
+    "RecolorTrack": "重新着色轨道",
+    "positionOffset": "位移",
+    "rotationOffset": "旋转",
+    "scale": "缩放",
+    "opacity": "透明度",
+    "ease": "缓动",
+    "gapLength": "跳格间隔",
+    "startTile": "起始砖",
+    "endTile": "结束砖",
+    "trackColor": "轨道颜色",
+    "duration": "时长",
+    "tile": "砖块",
+    "range": "范围",
+    "AddTiles": "添加砖块",
+    "OutBack": "回弹缓动",
+    "OutBounce": "弹跳缓动",
+    "linear": "线性缓动"
+  }
+}

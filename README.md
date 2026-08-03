@@ -1,6 +1,6 @@
 # My ADOFAI Mod
 
-A project template for creating A Dance of Fire and Ice (ADOFAI) mods that work with multiple mod loaders: Unity Mod Manager, MelonLoader, BepInEx, and Doorstop standalone.
+A Ponder-style interactive guide engine for A Dance of Fire and Ice (ADOFAI), based on [Create Ponder](https://github.com/Creators-of-Create/Ponder). It supports Unity Mod Manager, MelonLoader, and BepInEx.
 
 ## Project Structure
 
@@ -17,7 +17,6 @@ ProjectRoot/
 │   ├── umm/                                -- Unity Mod Manager adapter
 │   ├── melon/                              -- MelonLoader adapter
 │   ├── bepinex/                            -- BepInEx adapter
-│   └── doorstop/                           -- Doorstop standalone adapter
 ├── scripts/
 │   ├── pack.csx                            -- Distribution zip packer
 │   ├── pack.cmd                            -- Windows pack script
@@ -62,11 +61,11 @@ dotnet new install path/to/Ponder
 ### Command Line
 
 ```bash
-# All four loaders (default)
+# All supported loaders (default)
 dotnet new adofaiml -n MyMod -g "C:\Games\ADOFAI\A Dance of Fire and Ice.exe"
 
 # Select specific loaders (disable the ones you don't need)
-dotnet new adofaiml -n MyMod --bepinex false --doorstop false -g "C:\Games\ADOFAI\A Dance of Fire and Ice.exe"
+dotnet new adofaiml -n MyMod --bepinex false -g "C:\Games\ADOFAI\A Dance of Fire and Ice.exe"
 
 # Specify author and description
 dotnet new adofaiml -n MyMod -a "YourName" -d "My first ADOFAI mod" -g "path/to/game.exe"
@@ -89,7 +88,6 @@ After installing the template, create a new project and search for "ADOFAI" or
 | `-um` | `--umm` | Include UMM loader (default: true) |
 | `-ml` | `--melon` | Include MelonLoader (default: true) |
 | `-bx` | `--bepinex` | Include BepInEx (default: true) |
-| `-ds` | `--doorstop` | Include Doorstop (default: true) |
 
 ## Build and Deploy
 
@@ -100,7 +98,6 @@ Set `GameExePath` in the `.csproj` file (or pass it with `-p`), then:
 dotnet build -p:Loader=UMM
 dotnet build -p:Loader=ML
 dotnet build -p:Loader=BepInEx
-dotnet build -p:Loader=Doorstop
 
 # Release: build only, outputs to out/
 dotnet build -c Release
@@ -113,7 +110,6 @@ Deploy paths by loader:
 | `UMM` | `GameDir/Mods/{ModName}/` |
 | `ML` | `GameDir/Mods/` |
 | `BepInEx` | `GameDir/BepInEx/plugins/{ModName}/` |
-| `Doorstop` | `GameDir/` (root, alongside doorstop_config.ini) |
 
 Each project in the solution can be built independently. The `out/` directory
 collects all output files in a flat layout, regardless of which loader was built:
@@ -124,9 +120,7 @@ out/
 ├── {ModName}.Loader.UMM.dll        (if built)
 ├── {ModName}.Loader.Melon.dll      (if built)
 ├── {ModName}.Loader.BepInEx.dll    (if built)
-├── {ModName}.Loader.Doorstop.dll   (if built)
 ├── Info.json                        (only if UMM built)
-├── doorstop_config.ini              (only if doorstop built)
 └── Resources/
 ```
 
@@ -148,7 +142,6 @@ This produces per-loader ZIP archives in `dist/`:
 | `{ModName}_umm.zip` | `Mods/{ModName}/` flat |
 | `{ModName}_melon.zip` | `Mods/` flat |
 | `{ModName}_bepinex.zip` | `BepInEx/plugins/{ModName}/` flat |
-| `{ModName}_doorstop.zip` | root flat (includes doorstop_config.ini) |
 
 Each archive is self-contained: extract directly into the game directory.
 

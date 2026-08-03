@@ -27,6 +27,7 @@ namespace Ponder
             if (value)
             {
                 Handler.Log("Mod enabled");
+                PonderManager.SetEnabled(true);
                 PatchManager.UpdateAllPatches();
                 AsyncPatchManager.Start();
                 AsyncPatchManager.UpdateAllPatchesAsync();
@@ -34,6 +35,7 @@ namespace Ponder
             else
             {
                 Handler.Log("Mod disabled");
+                PonderManager.SetEnabled(false);
                 AsyncPatchManager.Stop();
                 PatchManager.UnpatchAll();
             }

@@ -79,10 +79,10 @@ namespace Ponder
             contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
             contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            AddText(content.transform, font, "<size=1.3em><color=#8A8A8A>PONDER · 思索</color></size>", 26f);
+            AddText(content.transform, font, $"<size=1.3em><color=#8A8A8A>{PonderLang.Get("ui.pageTitle", "PONDER · 思索")}</color></size>", 26f);
             titleText = AddText(content.transform, font, "", 46f);
             descText = AddText(content.transform, font, "", 26f);
-            AddText(content.transform, font, "<size=1.0em><color=#8A8A8A>点击任意处或按 Esc 关闭</color></size>", 22f);
+            AddText(content.transform, font, $"<size=1.0em><color=#8A8A8A>{PonderLang.Get("ui.closeHint", "点击任意处或按 Esc 关闭")}</color></size>", 22f);
 
             closeBtn = BuildCloseButton(font);
         }
@@ -152,7 +152,7 @@ namespace Ponder
             {
                 descText.text =
                     $"{sub.Description}\n\n" +
-                    "<size=0.9em><color=#8A8A8A>此处将承载关于此配置项的沉浸式思索场景（占位）</color></size>";
+                    $"<size=0.9em><color=#8A8A8A>{PonderLang.Get("ui.placeholderDesc", "此处将承载关于此配置项的沉浸式思索场景（占位）")}</color></size>";
             }
             open = true;
             gameObject.SetActive(true);

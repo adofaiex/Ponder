@@ -4,7 +4,7 @@ using System.IO.Compression;
 
 var projectDir = Directory.GetCurrentDirectory();
 var distDir = Path.Combine(projectDir, "dist");
-var coreOut = Path.Combine(projectDir, "core", "out");
+var outDir = Path.Combine(projectDir, "out");
 var modName = "Ponder";
 
 Directory.CreateDirectory(distDir);
@@ -21,7 +21,6 @@ void AddDir(ZipArchive zip, string sourceDir, string prefix)
 
 void Pack(string loader, string prefix)
 {
-    var outDir = Path.Combine(projectDir, "loaders", loader, "out");
     if (!Directory.Exists(outDir))
     {
         Console.WriteLine($"  skip {loader}: out/ not found");
@@ -30,7 +29,6 @@ void Pack(string loader, string prefix)
     var path = Path.Combine(distDir, $"{modName}_{loader}.zip");
     using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
     AddDir(zip, outDir, prefix);
-    AddDir(zip, Path.Combine(coreOut, "Resources"), prefix);
     Console.WriteLine($"  {path}");
 }
 

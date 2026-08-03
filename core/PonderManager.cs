@@ -13,10 +13,12 @@ namespace Ponder
         private PonderHud hud;
         private PonderSceneView sceneView;
         private PonderSelector? hoveredSelector;
+        private List<PonderSceneDef> _hoverScenes = new List<PonderSceneDef>();
         private PonderSubject? lastHovered;
         private bool charging;
         private float charge;
         private Exception lastError;
+        private bool _enabled = true;
 
         public static void Ensure()
         {
@@ -27,6 +29,19 @@ namespace Ponder
             GameObject go = new GameObject("PonderManager");
             DontDestroyOnLoad(go);
             Instance = go.AddComponent<PonderManager>();
+        }
+
+        public static void SetEnabled(bool enabled)
+        {
+            if (Instance == null)
+            {
+                return;
+            }
+            Instance._enabled = enabled;
+            if (!enabled)
+            {
+                Instance.CloseAll();
+            }
         }
 
         private void Update()
@@ -48,7 +63,7 @@ namespace Ponder
 
         private void UpdateCore()
         {
-            if (!Main.Settings.enablePonder)
+            if (!_enabled || !Main.Settings.enablePonder)
             {
                 CloseAll();
                 return;
@@ -89,14 +104,9 @@ namespace Ponder
             var hover = FindHoveredTarget(ed);
             var scenes = hover != null ? PonderEngine.FindScenes(hover) : new List<PonderSceneDef>();
             PonderSceneDef? scene = scenes.Count > 0 ? scenes[0] : null;
+            _hoverScenes = scenes;
 
-            if (hover != null && hoveredSelector != null &&
-                hover.Type == hoveredSelector.Type &&
-                hover.Event == hoveredSelector.Event &&
-                hover.Setting == hoveredSelector.Setting &&
-                hover.Tag == hoveredSelector.Tag &&
-                hover.Image == hoveredSelector.Image &&
-                hover.Floor == hoveredSelector.Floor)
+            if (hover != null && hoveredSelector != null && hover.IdentityEquals(hoveredSelector))
             {
                 // unchanged
             }
@@ -163,7 +173,7 @@ namespace Ponder
                         StopCharging();
                         hud.SetCharging(false, 0f);
                         hud.Hide();
-                        sceneView.Show(scene);
+                        sceneView.Show(_hoverScenes.Count > 0 ? _hoverScenes : new List<PonderSceneDef> { scene });
                     }
                 }
             }
@@ -179,7 +189,10 @@ namespace Ponder
             return Input.GetKeyUp(KeyCode.LeftAlt) || Input.GetKeyUp(KeyCode.RightAlt);
         }
 
-        /// <summary>检测鼠标当前悬停的目标（事件标题 / 设置标题 / 装饰物 / 砖块）。</summary>
+        /// <summary>
+        /// 检测鼠标当前悬停的目标，并描述成通用身份选择器：
+        /// 编辑器 Inspector 面板（事件/设置标题）、装饰物、砖块、以及任意可拾取 GameObject。
+        /// </summary>
         private PonderSelector? FindHoveredTarget(scnEditor ed)
         {
             var fromPanel = HoveredInspectorPanel(ed);
@@ -187,14 +200,10 @@ namespace Ponder
             {
                 return fromPanel;
             }
-            var fromDeco = HoveredDecoration();
-            if (fromDeco != null)
+            var fromObjects = HoveredWorldObject();
+            if (fromObjects != null)
             {
-                return fromDeco;
-            }
-            if (HoveredFloor())
-            {
-                return new PonderSelector { Type = "floor", Floor = true };
+                return fromObjects;
             }
             return null;
         }
@@ -231,56 +240,81 @@ namespace Ponder
                 }
 
                 var et = panel.selectedEventType.ToString();
+                var sel = new PonderSelector { Component = "InspectorPanel" };
                 if (panel.selectedEventType.IsSetting())
                 {
-                    return new PonderSelector { Type = "setting", Setting = et };
+                    sel.Setting = et;
                 }
-                return new PonderSelector { Type = "event", Event = et };
+                else
+                {
+                    sel.Event = et;
+                }
+                return sel;
             }
             return null;
         }
 
-        private static PonderSelector? HoveredDecoration()
+        /// <summary>通用世界悬停：把鼠标下的 GameObject 描述成身份选择器（名称/tag/组件/层级/砖块）。</summary>
+        private static PonderSelector? HoveredWorldObject()
         {
+            var cam = ADOBase.controller != null && ADOBase.controller.camy != null
+                ? ADOBase.controller.camy.camobj
+                : Camera.main;
+            if (cam == null)
+            {
+                return null;
+            }
+            var world = (Vector2)cam.ScreenToWorldPoint(Input.mousePosition);
+
+            // 装饰物（用自己的 hitbox collider）
             var dmg = scrDecorationManager.instance;
-            if (dmg == null || dmg.allDecorations == null || dmg.allDecorations.Count == 0)
+            if (dmg != null && dmg.allDecorations != null)
             {
-                return null;
-            }
-            var cam = ADOBase.controller != null && ADOBase.controller.camy != null
-                ? ADOBase.controller.camy.camobj
-                : Camera.main;
-            if (cam == null)
-            {
-                return null;
-            }
-            var world = cam.ScreenToWorldPoint(Input.mousePosition);
-            foreach (var d in dmg.allDecorations)
-            {
-                if (d == null)
+                foreach (var d in dmg.allDecorations)
                 {
-                    continue;
+                    if (d == null)
+                    {
+                        continue;
+                    }
+                    if (d.activeCollider != null && d.activeCollider.OverlapPoint(world))
+                    {
+                        return new PonderSelector
+                        {
+                            Component = "scrDecoration",
+                            Tag = d.decorationTag ?? "",
+                            Floor = false
+                        };
+                    }
                 }
-                if (d.activeCollider != null && d.activeCollider.OverlapPoint(world))
+            }
+
+            // 通用物理拾取：Floor 层（砖块）以及其他可碰撞层
+            var hits = Physics2D.OverlapPointAll(world);
+            if (hits.Length > 0)
+            {
+                Array.Sort(hits, static (a, b) => CompareSorting(a, b));
+                var go = hits[0].gameObject;
+                var layerName = LayerMask.LayerToName(go.layer);
+                var sel = new PonderSelector
                 {
-                    return new PonderSelector { Type = "decoration", Tag = d.decorationTag ?? "" };
-                }
+                    Name = go.name,
+                    Tag = go.tag,
+                    Component = go.GetComponent<scrFloor>() != null ? "scrFloor" : "",
+                    Layer = layerName,
+                    Floor = go.GetComponent<scrFloor>() != null
+                };
+                return sel;
             }
             return null;
         }
 
-        private static bool HoveredFloor()
+        private static int CompareSorting(Collider2D a, Collider2D b)
         {
-            var cam = ADOBase.controller != null && ADOBase.controller.camy != null
-                ? ADOBase.controller.camy.camobj
-                : Camera.main;
-            if (cam == null)
-            {
-                return false;
-            }
-            var world = cam.ScreenToWorldPoint(Input.mousePosition);
-            var mask = 1 << LayerMask.NameToLayer("Floor");
-            return Physics2D.OverlapPoint(world, mask) != null;
+            var ra = a.GetComponentInParent<Renderer>();
+            var rb = b.GetComponentInParent<Renderer>();
+            var sa = ra != null ? ra.sortingOrder : int.MinValue;
+            var sb = rb != null ? rb.sortingOrder : int.MinValue;
+            return sb.CompareTo(sa);
         }
 
         private static TMP_FontAsset GetFont()

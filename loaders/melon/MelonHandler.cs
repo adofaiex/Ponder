@@ -18,7 +18,7 @@ namespace Ponder.Loaders
 
         public string ModId => _mod.MelonAssembly.Assembly.GetName().Name ?? "AdofaiMod";
         public string ModVersion => _mod.MelonAssembly.Assembly.GetName().Version?.ToString() ?? "0.6.0";
-        public string ModPath => Directory.GetCurrentDirectory();
+        public string ModPath => Path.GetDirectoryName(_mod.MelonAssembly.Location) ?? Directory.GetCurrentDirectory();
 
         public void Log(string message) => MelonLogger.Msg(message);
         public void Warning(string message) => MelonLogger.Warning(message);
